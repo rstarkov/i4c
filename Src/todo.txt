@@ -1,0 +1,34 @@
+* arithmetic codec which adjusts probabilities on the go:
+  - start with all probabilities at 1 up to max symbol
+  - every time after encoding a symbol increment its probability
+
+* bring-to-front filter:
+  - initially map all symbols to themselves
+  - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
+
+
+
+* x/y methods in IntField
+* stop using Position in foreseeers
+
+* pick best size
+* full encode/decode
+* save intermediate png's
+
+* queue images and allow to flick through them. Also add scrolling. Generate them in a separate thread
+
+
+SELECT-AND-FILTER IN ONE GO
+
+
+
+Future improvements:
+* pre-pass to remove backgrounds and horz/vert boundaries?
+* multi-color predictor
+* auto-align on letter boundaries (requires flexible size foreseer)
+* adaptive arithmetic
+
+* super-slow-and-advanced predictor: order colors by frequency but keep all colors
+
+Speedups:
+* Accessor class for images, incrementing it advances to next element in a pre-defined direction
