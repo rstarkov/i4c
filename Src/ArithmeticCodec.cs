@@ -62,25 +62,33 @@ namespace i4c
             _probs[_symEnd] = estSections;
         }
 
+        public ArithmeticSectionsCodec(ulong[] probabilities, ulong estSections, Stream sourceStream)
+            : this(probabilities, estSections)
+        {
+            _arithWriter = new ArithmeticCodingWriter(sourceStream, _probs);
+        }
+
         public byte[] Encode()
         {
             if (_arithReader != null)
                 throw new InvalidOperationException("Cannot mix reads and writes in ArithmeticSectionsCodec");
 
             _arithWriter.Close(false);
-            return _memStream.ToArray();
+            return _memStream == null ? null : _memStream.ToArray();
         }
 
         public void Decode(byte[] data)
+        {
+            Decode(new MemoryStream(data));
+        }
+
+        public void Decode(Stream stream)
         {
             if (_arithWriter != null)
                 throw new InvalidOperationException("Cannot mix reads and writes in ArithmeticSectionsCodec");
 
             if (_arithReader == null)
-            {
-                _memStream = new MemoryStream(data);
-                _arithReader = new ArithmeticCodingReader(_memStream, _probs);
-            }
+                _arithReader = new ArithmeticCodingReader(stream, _probs);
         }
 
         public void WriteSection(int[] data)

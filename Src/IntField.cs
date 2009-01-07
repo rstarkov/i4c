@@ -149,6 +149,8 @@ namespace i4c
                 for (int x = 0; x < Width; x++, p++)
                 {
                     Data[p] = orig.Data[p] - foreseer.Foresee(orig, x, y, p);
+                    if (Data[p] < 0)
+                        Data[p] += 4;
                     foreseer.Learn(orig, x, y, p, orig.Data[p]);
                 }
         }
@@ -162,7 +164,7 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = diff.Data[p] + foreseer.Foresee(this, x, y, p);
+                    Data[p] = (diff.Data[p] + foreseer.Foresee(this, x, y, p)) % 4;
                     foreseer.Learn(this, x, y, p, this.Data[p]);
                 }
         }

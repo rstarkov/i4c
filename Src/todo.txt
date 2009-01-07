@@ -6,6 +6,8 @@
   - initially map all symbols to themselves
   - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
 
+* burrows-wheeler
+
 
 
 * x/y methods in IntField

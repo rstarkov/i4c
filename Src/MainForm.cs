@@ -19,6 +19,21 @@ namespace i4c
 
         private void miActionA1_Click(object sender, EventArgs e)
         {
+            IntField f = new IntField(0, 0);
+            f.ArgbLoadFromFile("scr7.png");
+            f.ArgbTo4c();
+            f.PredictionEnTransform(new HorzVertForeseer());
+            f.PredictionDeTransform(new HorzVertForeseer());
+            //f.PredictionEnTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+            //f.PredictionDeTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+            ViewImage(f);
+            //Fieldcode fc = new Fieldcode();
+            //byte[] bytes = fc.EnFieldcode(f, 1024, basename + ".field.{0}{1}.png");
+
+            //File.WriteAllBytes(basename + ".i4c", bytes);
+
+            //f.ArgbFromField(-3, 3);
+            //f.ArgbToBitmap().Save(basename + ".transform.png", ImageFormat.Png);
         }
 
         private void miActionA2_Click(object sender, EventArgs e)

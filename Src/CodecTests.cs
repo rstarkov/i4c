@@ -15,6 +15,12 @@ namespace i4c
             TestRandom();
         }
 
+        public static void TestLzw()
+        {
+            LzwCodec lzw = new LzwCodec(5);
+            int[] res = lzw.Encode(new int[] { 0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 4, 2, 3, 4, 2, 3, 4 });
+        }
+
         public static void TestEncode()
         {
             RunLengthCodec enc = new RunLengthCodec(4, 2, 2, 0);

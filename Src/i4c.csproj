@@ -62,6 +62,7 @@
     <Compile Include="Fieldcode.cs" />
     <Compile Include="Foreseer.cs" />
     <Compile Include="IntField.cs" />
+    <Compile Include="LzwCodec.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

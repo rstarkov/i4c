@@ -13,9 +13,12 @@ namespace i4c
         [STAThread]
         static void Main(string[] args)
         {
+            //CodecTests.TestLzw();
+            //args = new string[] { "scr6lzw.png" };
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            if (false)
+            if (args.Length == 0)
             {
                 Application.Run(new MainForm());
             }
@@ -23,14 +26,15 @@ namespace i4c
             {
                 string filename = args[0];
                 string basename = Path.GetFileNameWithoutExtension(filename);
+                Foreseer seer = new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer());
                 if (filename.ToLower().EndsWith(".png"))
                 {
                     IntField f = new IntField(0, 0);
                     f.ArgbLoadFromFile(filename);
                     f.ArgbTo4c();
-                    f.PredictionEnTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+                    f.PredictionEnTransform(seer);
                     Fieldcode fc = new Fieldcode();
-                    byte[] bytes = fc.EnFieldcode(f, 1024, basename + ".field.{0}{1}.png");
+                    byte[] bytes = fc.EnFieldcode(f, 1024, basename + ".field.{0}.png");
 
                     File.WriteAllBytes(basename + ".i4c", bytes);
 
@@ -40,10 +44,9 @@ namespace i4c
                 else
                 {
                     var bytes = File.ReadAllBytes(filename);
-                    IntField f = new IntField(1024, 768);
                     Fieldcode fc = new Fieldcode();
-                    fc.DeFieldcode(bytes, f, 1024);
-                    f.PredictionDeTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+                    IntField f = fc.DeFieldcode(bytes, 1024);
+                    f.PredictionDeTransform(seer);
 
                     f.ArgbFromField(0, 3);
                     f.ArgbToBitmap().Save(basename + ".decoded.png", ImageFormat.Png);

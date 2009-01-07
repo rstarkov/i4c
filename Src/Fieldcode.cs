@@ -12,78 +12,66 @@ namespace i4c
     {
         public byte[] EnFieldcode(IntField transformed, int symbols, string fieldNames)
         {
-            List<int[]> fields = new List<int[]>();
+            var fields = new List<int[]>();
             IntField temp;
             ulong[] probs = new ulong[symbols + 2];
             RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(symbols);
-            for (int i = -3; i <= 3; i++)
+            for (int i = 1; i <= 3; i++)
             {
-                if (i == 0)
-                    continue;
                 temp = transformed.Clone();
                 temp.Map(x => x == i ? 1 : 0);
                 var field = zc.Encode(temp.Data);
+                field = new LzwCodec(symbols).Encode(field);
                 CodecUtil.Shift(field, 1);
                 fields.Add(field);
                 var prob = CodecUtil.CountValues(field);
+                if (probs.Length < prob.Length)
+                    Array.Resize(ref probs, prob.Length);
                 for (int a = 1; a < prob.Length; a++)
                     probs[a] += prob[a];
 
                 if (fieldNames != null)
                 {
                     temp.ArgbFromField(0, 1);
-                    temp.ArgbToBitmap().Save(fieldNames.Fmt(Math.Abs(i), i > 0 ? "+" : "-"), ImageFormat.Png);
+                    temp.ArgbToBitmap().Save(fieldNames.Fmt(i), ImageFormat.Png);
+                    CodecUtil.Shift(field, -1);
+                    File.WriteAllLines(fieldNames.Fmt(i), field.Select(num => num.ToString()).ToArray());
+                    CodecUtil.Shift(field, 1);
                 }
             }
             probs[0] = 6;
 
-            //byte[] b_probs = ReducedProbsEn(probs, 32, 3, 16);
             MemoryStream ms = new MemoryStream();
             BinaryWriterPlus bwp = new BinaryWriterPlus(ms);
+            bwp.WriteUInt32Optim((uint)transformed.Width);
+            bwp.WriteUInt32Optim((uint)transformed.Height);
             for (int p = 0; p < probs.Length; p++)
                 bwp.WriteUInt64Optim(probs[p]);
-            bwp.Close();
-            byte[] b_probs = ms.ToArray();
 
-            ms = new MemoryStream();
-            ArithmeticCodingWriter acw = new ArithmeticCodingWriter(ms, probs);
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6, ms);
             foreach (var field in fields)
-            {
-                foreach (var sym in field)
-                    acw.WriteSymbol(sym);
-                acw.WriteSymbol(0);
-            }
-            acw.Close(false);
-            byte[] b_data = ms.ToArray();
+                ac.WriteSection(field);
+            ac.Encode();
 
-            return b_probs.Concat(b_data).ToArray();
+            return ms.ToArray();
         }
 
-        public void DeFieldcode(byte[] bytes, IntField transformed, int symbols)
+        public IntField DeFieldcode(byte[] bytes, int symbols)
         {
             MemoryStream ms = new MemoryStream(bytes);
             BinaryReaderPlus brp = new BinaryReaderPlus(ms);
+            int w = brp.ReadUInt32Optim();
+            int h = brp.ReadUInt32Optim();
+            IntField transformed = new IntField(w, h);
             ulong[] probs = new ulong[symbols + 2];
             for (int p = 0; p < probs.Length; p++)
                 probs[p] = brp.ReadUInt64Optim();
 
-            ArithmeticCodingReader acr = new ArithmeticCodingReader(ms, probs);
-            for (int i = -3; i <= 3; i++)
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6);
+            ac.Decode(ms);
+            for (int i = 1; i <= 3; i++)
             {
-                if (i == 0)
-                    continue;
-
-                List<int> field = new List<int>();
-                while (true)
-                {
-                    int sym = acr.ReadSymbol();
-                    if (sym == 0)
-                        break;
-                    else
-                        field.Add(sym);
-                }
-
-                int[] fieldi = field.ToArray();
+                int[] fieldi = ac.ReadSection();
                 CodecUtil.Shift(fieldi, -1);
 
                 RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(symbols);
@@ -93,6 +81,8 @@ namespace i4c
                     if (fieldi[p] == 1)
                         transformed.Data[p] = i;
             }
+
+            return transformed;
         }
 
         //byte[] ReducedProbsEn(ulong[] probs, int exactStart, int combineCount, int exactEnd)
