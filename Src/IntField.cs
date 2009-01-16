@@ -148,6 +148,7 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
+                    //Data[p] = orig.Data[p] ^ foreseer.Foresee(orig, x, y, p);
                     Data[p] = orig.Data[p] - foreseer.Foresee(orig, x, y, p);
                     if (Data[p] < 0)
                         Data[p] += 4;
@@ -164,6 +165,7 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
+                    //Data[p] = diff.Data[p] ^ foreseer.Foresee(this, x, y, p);
                     Data[p] = (diff.Data[p] + foreseer.Foresee(this, x, y, p)) % 4;
                     foreseer.Learn(this, x, y, p, this.Data[p]);
                 }
@@ -189,6 +191,19 @@ namespace i4c
             return result;
         }
 
+        public void InterlacedSplit(out IntField field1, out IntField field2)
+        {
+            field1 = new IntField(Width, (Height + 1) / 2);
+            field2 = new IntField(Width, Height / 2);
+
+            for (int y = 0; y < Height; y++)
+            {
+                if (y % 2 == 0)
+                    Array.Copy(Data, y*Width, field1.Data, (y/2)*Width, Width);
+                else
+                    Array.Copy(Data, y*Width, field2.Data, (y/2)*Width, Width);
+            }
+        }
     }
 
 }

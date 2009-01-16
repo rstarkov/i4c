@@ -20,13 +20,20 @@ namespace i4c
         private void miActionA1_Click(object sender, EventArgs e)
         {
             IntField f = new IntField(0, 0);
-            f.ArgbLoadFromFile("scr7.png");
+            f.ArgbLoadFromFile("scr5.png");
             f.ArgbTo4c();
-            f.PredictionEnTransform(new HorzVertForeseer());
-            f.PredictionDeTransform(new HorzVertForeseer());
-            //f.PredictionEnTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+            IntField f1, f2;
+            f.InterlacedSplit(out f1, out f2);
+            //f1.PredictionEnTransform(new HorzVertForeseer());
+            //f.PredictionDeTransform(new HorzVertForeseer());
+            //f1.PredictionEnTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+            //f.PredictionDeTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
+            //ViewImage(f1);
+
+            f.PredictionEnTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
             //f.PredictionDeTransform(new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer()));
             ViewImage(f);
+
             //Fieldcode fc = new Fieldcode();
             //byte[] bytes = fc.EnFieldcode(f, 1024, basename + ".field.{0}{1}.png");
 

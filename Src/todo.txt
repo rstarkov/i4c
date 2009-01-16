@@ -1,3 +1,5 @@
+with xordiff encoding: encode blocks, eg 4x4
+
 * arithmetic codec which adjusts probabilities on the go:
   - start with all probabilities at 1 up to max symbol
   - every time after encoding a symbol increment its probability
