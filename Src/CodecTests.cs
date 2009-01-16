@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using RT.Util;
 using RT.Util.ExtensionMethods;
+using System.Linq;
 
 namespace i4c
 {
@@ -27,19 +28,19 @@ namespace i4c
             // 0, 1, 2 - data symbols
             // 3, 4 - run of 0, stage 0 and 1
             Assert.IsTrue(enc.Encode(new int[] { 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0 })
-                .EqualItems(new int[] { 0, 1, 2, 2, 2, 4, 1, 0 }));
+                .SequenceEqual(new int[] { 0, 1, 2, 2, 2, 4, 1, 0 }));
 
             enc = new RunLengthCodec(9, 2, 3, 0);
             // 0, 1 - data
             // 2, 3, 4 - run of 0, stage 0, 1, 2
             Assert.IsTrue(enc.Encode(new int[] { 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 })
-                .EqualItems(new int[] { 0, 1, 1, 0, 1, 4, 5, 0 }));
+                .SequenceEqual(new int[] { 0, 1, 1, 0, 1, 4, 5, 0 }));
 
             enc = new RunLengthCodec(5, 2, 3, 0);
             // 0, 1 - data
             // 2, 3, 4 - run of 0, stage 0, 1, 2
             Assert.IsTrue(enc.Encode(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 })
-                .EqualItems(new int[] { 4, 3, 5 }));
+                .SequenceEqual(new int[] { 4, 3, 5 }));
         }
 
         public static void TestDecode()
@@ -48,11 +49,11 @@ namespace i4c
             // 0, 1, 2 - data symbols
             // 3, 4 - run of 0, stage 0 and 1
             Assert.IsTrue(dec.Decode(new int[] { 0, 0, 0, 1, 1, 2, 2, 2 })
-                .EqualItems(new int[] { 0, 0, 0, 1, 1, 2, 2, 2 }));
+                .SequenceEqual(new int[] { 0, 0, 0, 1, 1, 2, 2, 2 }));
             Assert.IsTrue(dec.Decode(new int[] { 3, 2 })
-                .EqualItems(new int[] { 0, 0, 0 }));
+                .SequenceEqual(new int[] { 0, 0, 0 }));
             Assert.IsTrue(dec.Decode(new int[] { 3, 0, 3, 2, 1, 3, 4, 2, 3, 0, 4, 0, 0 })
-                .EqualItems(new int[] { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 }));
+                .SequenceEqual(new int[] { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 }));
         }
 
         public static void TestRandom()
@@ -102,30 +103,30 @@ namespace i4c
             //RunLengthCodec enc = new RunLengthCodec(symMax, symDataMax, rlStages, symRle);
             //RunLengthCodec dec = new RunLengthCodec(symMax, symDataMax, rlStages, symRle);
             //trip = dec.Decode(enc.Encode(data));
-            //Assert.IsTrue(data.EqualItems(trip));
+            //Assert.IsTrue(data.SequenceEqual(trip));
 
             //ulong[] probs = CodecUtil.CountValues(data);
             //ArithmeticCodec enca = new ArithmeticCodec(probs);
             //ArithmeticCodec deca = new ArithmeticCodec(probs);
             //trip = deca.Decode(enca.Encode(data));
-            //Assert.IsTrue(data.EqualItems(trip));
+            //Assert.IsTrue(data.SequenceEqual(trip));
 
             if (symDataMax == 1)
             {
                 //RunLength01Codec encz = new RunLength01Codec();
                 //RunLength01Codec decz = new RunLength01Codec();
                 //trip = decz.Decode(encz.Encode(data));
-                //Assert.IsTrue(data.EqualItems(trip));
+                //Assert.IsTrue(data.SequenceEqual(trip));
 
                 //RunLength01MaxCodec enczm = new RunLength01MaxCodec(15);
                 //RunLength01MaxCodec deczm = new RunLength01MaxCodec(15);
                 //trip = deczm.Decode(enczm.Encode(data));
-                //Assert.IsTrue(data.EqualItems(trip));
+                //Assert.IsTrue(data.SequenceEqual(trip));
 
                 RunLength01MaxSmartCodec enczs = new RunLength01MaxSmartCodec(15);
                 RunLength01MaxSmartCodec deczs = new RunLength01MaxSmartCodec(15);
                 trip = deczs.Decode(enczs.Encode(data));
-                Assert.IsTrue(data.EqualItems(trip));
+                Assert.IsTrue(data.SequenceEqual(trip));
             }
         }
     }
