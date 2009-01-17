@@ -38,7 +38,7 @@ namespace i4c
 
                     File.WriteAllBytes(basename + ".i4c", bytes);
 
-                    f.ArgbFromField(-3, 3);
+                    f.ArgbFromField(0, 3);
                     f.ArgbToBitmap().Save(basename + ".transform.png", ImageFormat.Png);
                 }
                 else
