@@ -1,12 +1,14 @@
-with xordiff encoding: encode blocks, eg 4x4
-
-* arithmetic codec which adjusts probabilities on the go:
-  - start with all probabilities at 1 up to max symbol
-  - every time after encoding a symbol increment its probability
+- with xordiff encoding: encode blocks, eg 4x4
+- encode rectangles that are punched out of each color plane, akin to kinds encoding
+  - create a low-res image where every pixel is only black if the entire rectangle was black
 
 * bring-to-front filter:
   - initially map all symbols to themselves
   - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
+
+* arithmetic codec which adjusts probabilities on the go:
+  - start with all probabilities at 1 up to max symbol
+  - every time after encoding a symbol increment its probability
 
 * burrows-wheeler
 

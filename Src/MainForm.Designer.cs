@@ -29,63 +29,77 @@
         private void InitializeComponent()
         {
             this.MainMenu = new System.Windows.Forms.MenuStrip();
-            this.miAction = new System.Windows.Forms.ToolStripMenuItem();
-            this.miActionA1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.pnl = new RT.Util.Controls.DoubleBufferedPanel();
-            this.miActionA2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.miTask = new System.Windows.Forms.ToolStripMenuItem();
+            this.tabsMain = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.miTaskExit = new System.Windows.Forms.ToolStripMenuItem();
             this.MainMenu.SuspendLayout();
+            this.tabsMain.SuspendLayout();
             this.SuspendLayout();
             // 
             // MainMenu
             // 
             this.MainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.miAction});
+            this.miTask});
             this.MainMenu.Location = new System.Drawing.Point(0, 0);
             this.MainMenu.Name = "MainMenu";
             this.MainMenu.Size = new System.Drawing.Size(284, 24);
             this.MainMenu.TabIndex = 0;
             this.MainMenu.Text = "menuStrip1";
             // 
-            // miAction
+            // miTask
             // 
-            this.miAction.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.miActionA1,
-            this.miActionA2});
-            this.miAction.Name = "miAction";
-            this.miAction.Size = new System.Drawing.Size(54, 20);
-            this.miAction.Text = "Action";
+            this.miTask.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.miTaskExit});
+            this.miTask.Name = "miTask";
+            this.miTask.Size = new System.Drawing.Size(43, 20);
+            this.miTask.Text = "Task";
             // 
-            // miActionA1
+            // tabsMain
             // 
-            this.miActionA1.Name = "miActionA1";
-            this.miActionA1.ShortcutKeys = System.Windows.Forms.Keys.F1;
-            this.miActionA1.Size = new System.Drawing.Size(152, 22);
-            this.miActionA1.Text = "A1";
-            this.miActionA1.Click += new System.EventHandler(this.miActionA1_Click);
+            this.tabsMain.Controls.Add(this.tabPage1);
+            this.tabsMain.Controls.Add(this.tabPage2);
+            this.tabsMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabsMain.Location = new System.Drawing.Point(0, 24);
+            this.tabsMain.Name = "tabsMain";
+            this.tabsMain.SelectedIndex = 0;
+            this.tabsMain.Size = new System.Drawing.Size(284, 240);
+            this.tabsMain.TabIndex = 1;
             // 
-            // pnl
+            // tabPage1
             // 
-            this.pnl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnl.Location = new System.Drawing.Point(0, 24);
-            this.pnl.Name = "pnl";
-            this.pnl.Size = new System.Drawing.Size(284, 240);
-            this.pnl.TabIndex = 1;
-            this.pnl.PaintBuffer += new System.Windows.Forms.PaintEventHandler(this.pnl_PaintBuffer);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(276, 214);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.UseVisualStyleBackColor = true;
             // 
-            // miActionA2
+            // tabPage2
             // 
-            this.miActionA2.Name = "miActionA2";
-            this.miActionA2.ShortcutKeys = System.Windows.Forms.Keys.F2;
-            this.miActionA2.Size = new System.Drawing.Size(152, 22);
-            this.miActionA2.Text = "A2";
-            this.miActionA2.Click += new System.EventHandler(this.miActionA2_Click);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(276, 214);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // miTaskExit
+            // 
+            this.miTaskExit.Name = "miTaskExit";
+            this.miTaskExit.Size = new System.Drawing.Size(152, 22);
+            this.miTaskExit.Text = "Exit";
+            this.miTaskExit.Click += new System.EventHandler(this.miTaskExit_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 264);
-            this.Controls.Add(this.pnl);
+            this.Controls.Add(this.tabsMain);
             this.Controls.Add(this.MainMenu);
             this.MainMenuStrip = this.MainMenu;
             this.Name = "MainForm";
@@ -93,6 +107,7 @@
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.MainMenu.ResumeLayout(false);
             this.MainMenu.PerformLayout();
+            this.tabsMain.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -101,10 +116,11 @@
         #endregion
 
         private System.Windows.Forms.MenuStrip MainMenu;
-        private System.Windows.Forms.ToolStripMenuItem miAction;
-        private System.Windows.Forms.ToolStripMenuItem miActionA1;
-        private RT.Util.Controls.DoubleBufferedPanel pnl;
-        private System.Windows.Forms.ToolStripMenuItem miActionA2;
+        private System.Windows.Forms.ToolStripMenuItem miTask;
+        private System.Windows.Forms.TabControl tabsMain;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.ToolStripMenuItem miTaskExit;
     }
 }
 

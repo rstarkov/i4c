@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Drawing.Imaging;
-using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+using RT.Util.Dialogs;
+using RT.Util.ExtensionMethods;
 
 namespace i4c
 {
@@ -13,43 +14,31 @@ namespace i4c
         [STAThread]
         static void Main(string[] args)
         {
-            //CodecTests.TestLzw();
-            //args = new string[] { "scr6lzw.png" };
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            MainForm form = new MainForm();
+
             if (args.Length == 0)
             {
-                Application.Run(new MainForm());
+                Application.Run(form);
             }
             else
             {
-                string filename = args[0];
-                string basename = Path.GetFileNameWithoutExtension(filename);
-                Foreseer seer = new FixedSizeForeseer(7, 7, 3, new HorzVertForeseer());
-                if (filename.ToLower().EndsWith(".png"))
+                if (args[0] == "?")
                 {
-                    IntField f = new IntField(0, 0);
-                    f.ArgbLoadFromFile(filename);
-                    f.ArgbTo4c();
-                    f.PredictionEnTransform(seer);
-                    Fieldcode fc = new Fieldcode();
-                    byte[] bytes = fc.EnFieldcode(f, 1024, basename + ".field.{0}.png");
-
-                    File.WriteAllBytes(basename + ".i4c", bytes);
-
-                    f.ArgbFromField(0, 3);
-                    f.ArgbToBitmap().Save(basename + ".transform.png", ImageFormat.Png);
+                    DlgMessage.ShowInfo("Available tasks:\n\n" + "".Join(form.Tasks.Select(task => "* " + task.Name + "\n")));
+                    return;
                 }
                 else
                 {
-                    var bytes = File.ReadAllBytes(filename);
-                    Fieldcode fc = new Fieldcode();
-                    IntField f = fc.DeFieldcode(bytes, 1024);
-                    f.PredictionDeTransform(seer);
-
-                    f.ArgbFromField(0, 3);
-                    f.ArgbToBitmap().Save(basename + ".decoded.png", ImageFormat.Png);
+                    Task task = form.Tasks.Where(t => t.Name.ToLower() == args[0]).First();
+                    Form waitform = new Form();
+                    waitform.Text = "i4c - please wait...";
+                    waitform.Height = 50;
+                    waitform.Show();
+                    task.Process(args.Skip(1).ToArray());
+                    waitform.Close();
                 }
             }
         }

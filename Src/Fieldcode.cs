@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing.Imaging;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
 
 namespace i4c
 {
     public class Fieldcode
     {
-        public byte[] EnFieldcode(IntField transformed, int symbols, string fieldNames)
+        public byte[] EnFieldcode(IntField transformed, int symbols)
         {
+            MainForm.AddImage(transformed, 0, 3, "xformed");
             var fields = new List<int[]>();
             IntField temp;
             ulong[] probs = new ulong[symbols + 2];
@@ -21,23 +18,12 @@ namespace i4c
                 temp = transformed.Clone();
                 temp.Map(x => x == i ? 1 : 0);
                 var field = zc.Encode(temp.Data);
-                field = new LzwCodec(symbols).Encode(field);
                 CodecUtil.Shift(field, 1);
                 fields.Add(field);
                 var prob = CodecUtil.CountValues(field);
-                if (probs.Length < prob.Length)
-                    Array.Resize(ref probs, prob.Length);
                 for (int a = 1; a < prob.Length; a++)
                     probs[a] += prob[a];
-
-                if (fieldNames != null)
-                {
-                    temp.ArgbFromField(0, 1);
-                    temp.ArgbToBitmap().Save(fieldNames.Fmt(i), ImageFormat.Png);
-                    CodecUtil.Shift(field, -1);
-                    File.WriteAllLines(fieldNames.Fmt(i), field.Select(num => num.ToString()).ToArray());
-                    CodecUtil.Shift(field, 1);
-                }
+                MainForm.AddImage(temp, 0, 1, "field " + i);
             }
             probs[0] = 6;
 
@@ -80,7 +66,13 @@ namespace i4c
                 for (int p = 0; p < transformed.Width*transformed.Height; p++)
                     if (fieldi[p] == 1)
                         transformed.Data[p] = i;
+
+                IntField img = new IntField(transformed.Width, transformed.Height);
+                img.Data = fieldi;
+                MainForm.AddImage(img, 0, 1, "field " + i);
             }
+
+            MainForm.AddImage(transformed, 0, 3, "xform");
 
             return transformed;
         }

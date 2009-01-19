@@ -139,7 +139,7 @@ namespace i4c
                 }
         }
 
-        public void PredictionEnTransform(Foreseer foreseer)
+        public void PredictionEnTransformDiff(Foreseer foreseer, int modulus)
         {
             IntField orig = this.Clone();
             foreseer.Initialize(orig);
@@ -148,15 +148,14 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    //Data[p] = orig.Data[p] ^ foreseer.Foresee(orig, x, y, p);
                     Data[p] = orig.Data[p] - foreseer.Foresee(orig, x, y, p);
                     if (Data[p] < 0)
-                        Data[p] += 4;
+                        Data[p] += modulus;
                     foreseer.Learn(orig, x, y, p, orig.Data[p]);
                 }
         }
 
-        public void PredictionDeTransform(Foreseer foreseer)
+        public void PredictionDeTransformDiff(Foreseer foreseer, int modulus)
         {
             IntField diff = this.Clone();
             foreseer.Initialize(this);
@@ -165,8 +164,35 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    //Data[p] = diff.Data[p] ^ foreseer.Foresee(this, x, y, p);
-                    Data[p] = (diff.Data[p] + foreseer.Foresee(this, x, y, p)) % 4;
+                    Data[p] = (diff.Data[p] + foreseer.Foresee(this, x, y, p)) % modulus;
+                    foreseer.Learn(this, x, y, p, this.Data[p]);
+                }
+        }
+
+        public void PredictionEnTransformXor(Foreseer foreseer)
+        {
+            IntField orig = this.Clone();
+            foreseer.Initialize(orig);
+
+            int p = 0;
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++, p++)
+                {
+                    Data[p] = orig.Data[p] ^ foreseer.Foresee(orig, x, y, p);
+                    foreseer.Learn(orig, x, y, p, orig.Data[p]);
+                }
+        }
+
+        public void PredictionDeTransformXor(Foreseer foreseer)
+        {
+            IntField diff = this.Clone();
+            foreseer.Initialize(this);
+
+            int p = 0;
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++, p++)
+                {
+                    Data[p] = diff.Data[p] ^ foreseer.Foresee(this, x, y, p);
                     foreseer.Learn(this, x, y, p, this.Data[p]);
                 }
         }
