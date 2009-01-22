@@ -29,11 +29,11 @@
         private void InitializeComponent()
         {
             this.MainMenu = new System.Windows.Forms.MenuStrip();
-            this.miTask = new System.Windows.Forms.ToolStripMenuItem();
+            this.miCompr = new System.Windows.Forms.ToolStripMenuItem();
             this.tabsMain = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.miTaskExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.miDev = new System.Windows.Forms.ToolStripMenuItem();
             this.MainMenu.SuspendLayout();
             this.tabsMain.SuspendLayout();
             this.SuspendLayout();
@@ -41,20 +41,19 @@
             // MainMenu
             // 
             this.MainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.miTask});
+            this.miCompr,
+            this.miDev});
             this.MainMenu.Location = new System.Drawing.Point(0, 0);
             this.MainMenu.Name = "MainMenu";
             this.MainMenu.Size = new System.Drawing.Size(284, 24);
             this.MainMenu.TabIndex = 0;
             this.MainMenu.Text = "menuStrip1";
             // 
-            // miTask
+            // miCompr
             // 
-            this.miTask.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.miTaskExit});
-            this.miTask.Name = "miTask";
-            this.miTask.Size = new System.Drawing.Size(43, 20);
-            this.miTask.Text = "Task";
+            this.miCompr.Name = "miCompr";
+            this.miCompr.Size = new System.Drawing.Size(88, 20);
+            this.miCompr.Text = "Compressors";
             // 
             // tabsMain
             // 
@@ -87,12 +86,11 @@
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
-            // miTaskExit
+            // miDev
             // 
-            this.miTaskExit.Name = "miTaskExit";
-            this.miTaskExit.Size = new System.Drawing.Size(152, 22);
-            this.miTaskExit.Text = "Exit";
-            this.miTaskExit.Click += new System.EventHandler(this.miTaskExit_Click);
+            this.miDev.Name = "miDev";
+            this.miDev.Size = new System.Drawing.Size(39, 20);
+            this.miDev.Text = "Dev";
             // 
             // MainForm
             // 
@@ -116,11 +114,11 @@
         #endregion
 
         private System.Windows.Forms.MenuStrip MainMenu;
-        private System.Windows.Forms.ToolStripMenuItem miTask;
+        private System.Windows.Forms.ToolStripMenuItem miCompr;
         private System.Windows.Forms.TabControl tabsMain;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.ToolStripMenuItem miTaskExit;
+        private System.Windows.Forms.ToolStripMenuItem miDev;
     }
 }
 

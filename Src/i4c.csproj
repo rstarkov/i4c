@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="ArithmeticCodec.cs" />
     <Compile Include="CodecUtil.cs" />
+    <Compile Include="Compressor.cs" />
     <Compile Include="CsvTable.cs" />
     <Compile Include="Fieldcode.cs" />
     <Compile Include="Foreseer.cs" />

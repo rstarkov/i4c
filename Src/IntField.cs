@@ -89,7 +89,7 @@ namespace i4c
                 bb.Bits[bp++] = (byte)(data >> 16);  // red
                 bb.Bits[bp++] = (byte)(data >> 24);  // alpha
             }
-            return bb.Bitmap;
+            return bb.GetBitmapCopy();
         }
 
         public void ArgbSetAlpha(byte alpha)

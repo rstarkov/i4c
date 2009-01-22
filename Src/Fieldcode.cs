@@ -6,50 +6,73 @@ namespace i4c
 {
     public class Fieldcode
     {
-        public byte[] EnFieldcode(IntField transformed, int symbols)
+        Compressor _compr;
+        int _symbols;
+
+        public Fieldcode(Compressor compr, int symbols)
         {
-            MainForm.AddImage(transformed, 0, 3, "xformed");
+            _compr = compr;
+            _symbols = symbols;
+        }
+
+        public byte[] EnFieldcode(IntField transformed)
+        {
+            _compr.AddImage(transformed, 0, 3, "enfield-xformed");
             var fields = new List<int[]>();
             IntField temp;
-            ulong[] probs = new ulong[symbols + 2];
-            RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(symbols);
+            ulong[] probs = new ulong[_symbols + 2];
+            RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(_symbols);
             for (int i = 1; i <= 3; i++)
             {
                 temp = transformed.Clone();
                 temp.Map(x => x == i ? 1 : 0);
                 var field = zc.Encode(temp.Data);
                 CodecUtil.Shift(field, 1);
+                _compr.SetCounter("symbols|field-"+i, field.Length);
                 fields.Add(field);
                 var prob = CodecUtil.CountValues(field);
                 for (int a = 1; a < prob.Length; a++)
                     probs[a] += prob[a];
-                MainForm.AddImage(temp, 0, 1, "field " + i);
+                _compr.AddImage(temp, 0, 1, "enfield-f" + i);
             }
             probs[0] = 6;
 
+            long pos = 0;
             MemoryStream ms = new MemoryStream();
             BinaryWriterPlus bwp = new BinaryWriterPlus(ms);
             bwp.WriteUInt32Optim((uint)transformed.Width);
             bwp.WriteUInt32Optim((uint)transformed.Height);
+            _compr.SetCounter("bytes|size", ms.Position - pos);
+            pos = ms.Position;
+
             for (int p = 0; p < probs.Length; p++)
                 bwp.WriteUInt64Optim(probs[p]);
+            _compr.SetCounter("bytes|probs", ms.Position - pos);
+            pos = ms.Position;
 
             ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6, ms);
-            foreach (var field in fields)
-                ac.WriteSection(field);
+            for (int i = 0; i < fields.Count; i++)
+            {
+                ac.WriteSection(fields[i]);
+                _compr.SetCounter("bytes|fields|"+(i+1), ms.Position - pos);
+                pos = ms.Position;
+            }
             ac.Encode();
 
-            return ms.ToArray();
+            var arr = ms.ToArray();
+            _compr.SetCounter("bytes|arith-err", arr.Length - pos);
+
+            return arr;
         }
 
-        public IntField DeFieldcode(byte[] bytes, int symbols)
+        public IntField DeFieldcode(byte[] bytes)
         {
             MemoryStream ms = new MemoryStream(bytes);
             BinaryReaderPlus brp = new BinaryReaderPlus(ms);
             int w = brp.ReadUInt32Optim();
             int h = brp.ReadUInt32Optim();
             IntField transformed = new IntField(w, h);
-            ulong[] probs = new ulong[symbols + 2];
+            ulong[] probs = new ulong[_symbols + 2];
             for (int p = 0; p < probs.Length; p++)
                 probs[p] = brp.ReadUInt64Optim();
 
@@ -60,7 +83,7 @@ namespace i4c
                 int[] fieldi = ac.ReadSection();
                 CodecUtil.Shift(fieldi, -1);
 
-                RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(symbols);
+                RunLength01MaxSmartCodec zc = new RunLength01MaxSmartCodec(_symbols);
                 fieldi = zc.Decode(fieldi);
 
                 for (int p = 0; p < transformed.Width*transformed.Height; p++)
@@ -69,50 +92,12 @@ namespace i4c
 
                 IntField img = new IntField(transformed.Width, transformed.Height);
                 img.Data = fieldi;
-                MainForm.AddImage(img, 0, 1, "field " + i);
+                _compr.AddImage(img, 0, 1, "defield-f" + i);
             }
 
-            MainForm.AddImage(transformed, 0, 3, "xform");
+            _compr.AddImage(transformed, 0, 3, "defield-xformed");
 
             return transformed;
         }
-
-        //byte[] ReducedProbsEn(ulong[] probs, int exactStart, int combineCount, int exactEnd)
-        //{
-        //    MemoryStream ms = new MemoryStream();
-        //    BinaryWriterPlus bwp = new BinaryWriterPlus(ms);
-        //    int endBoundary = probs.Length - exactEnd;
-        //    int p = 0;
-        //    for (; p < exactStart; p++)
-        //        bwp.WriteUInt64Optim(probs[p]);
-        //    while (true)
-        //    {
-        //        // Update
-
-        //        if (p >= endBoundary)
-        //            break;
-        //    }
-        //    for (p += combineCount; p < endBoundary; p += combineCount)
-        //    {
-        //    }
-        //    for (p = endBoundary; p < probs.Length; p++)
-        //        bwp.WriteUInt64Optim(probs[p]);
-        //}
-
-        //ulong[] FieldcodeMakeProbs(int width, int height)
-        //{
-        //    ulong[] result = new ulong[width*height];
-        //    // all occurrences are multiplied by 1000 to represent symbols that occur less than once per stream
-        //    result[0] = 6 * 1000; // fieldcode separator
-        //    for (int runlen = 1; runlen < result.Length; runlen++)
-        //    {
-        //        if (runlen < width)
-        //            result[runlen] = (int)(3172 * Math.Pow(runlen, -1.47));
-        //        else
-        //            result[runlen] = (runlen - 
-        //    }
-        //}
-
-
     }
 }
