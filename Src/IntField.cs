@@ -21,6 +21,11 @@ namespace i4c
         public OutOfBoundsMode OutOfBoundsMode = OutOfBoundsMode.ThrowException;
         public int OutOfBoundsColor = 0;
 
+        public IntField(Bitmap bmp)
+        {
+            ArgbFromBitmap(bmp);
+        }
+
         public IntField(int width, int height)
         {
             Width = width;
@@ -64,7 +69,11 @@ namespace i4c
 
         public void ArgbLoadFromFile(string filename)
         {
-            Bitmap bmp = new Bitmap(filename);
+            ArgbFromBitmap(new Bitmap(filename));
+        }
+
+        public void ArgbFromBitmap(Bitmap bmp)
+        {
             BytesBitmap bb = new BytesBitmap(bmp.Width, bmp.Height, PixelFormat.Format32bppArgb);
             Graphics gr = Graphics.FromImage(bb.Bitmap);
             gr.DrawImage(bmp, 0, 0, bmp.Width, bmp.Height);
@@ -229,6 +238,54 @@ namespace i4c
                 else
                     Array.Copy(Data, y*Width, field2.Data, (y/2)*Width, Width);
             }
+        }
+
+        public IntField ReduceKeepingPixels(int blocksize)
+        {
+            IntField img = new IntField((Width + blocksize - 1) / blocksize, (Height + blocksize - 1) / blocksize);
+            for (int y = 0; y < img.Height; y++)
+            {
+                for (int x = 0; x < img.Width; x++)
+                {
+                    int ix_end = Math.Min(x*blocksize + blocksize, Width);
+                    int iy_end = Math.Min(y*blocksize + blocksize, Height);
+                    for (int iy = y*blocksize; iy < iy_end; iy++)
+                        for (int ix = x*blocksize; ix < ix_end; ix++)
+                            if (this[ix, iy] != 0)
+                            {
+                                img[x, y] = 1;
+                                goto breakout;
+                            }
+                    breakout: ;
+                }
+            }
+            return img;
+        }
+
+        public void ShadeRect(int x, int y, int w, int h, uint shadeAnd, uint shadeOr)
+        {
+            if (x + w > Width)
+                w = Width - x;
+            if (y + h > Height)
+                h = Height - y;
+            for (int iy = y; iy < y + h; iy++)
+                for (int ix = x; ix < x + w; ix++)
+                    this[ix, iy] = (this[ix, iy] & (int)shadeAnd) | (int)shadeOr;
+        }
+
+        public int[] GetRectData(Rectangle rect)
+        {
+            return GetRectData(rect.Left, rect.Top, rect.Width, rect.Height);
+        }
+
+        public int[] GetRectData(int fx, int fy, int w, int h)
+        {
+            if (fx + w > Width) w = Width - fx;
+            if (fy + h > Height) h = Height - fy;
+            int[] res = new int[w * h];
+            for (int y = fy; y < fy + h; y++)
+                Array.Copy(Data, y*Width + fx, res, (y - fy) * w, w);
+            return res;
         }
     }
 

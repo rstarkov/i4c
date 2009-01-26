@@ -97,6 +97,7 @@
     <Compile Include="RunLength01Codec.cs" />
     <Compile Include="RunLengthCodec.cs" />
     <Compile Include="CodecTests.cs" />
+    <Compile Include="TimwiCec.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
