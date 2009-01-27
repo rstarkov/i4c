@@ -119,9 +119,8 @@ namespace i4c
             // Start writing to the file
             long pos = 0;
 
-            var bwp = new BinaryWriterPlus(output);
-            bwp.WriteUInt32Optim((uint)bw);
-            bwp.WriteUInt32Optim((uint)bh);
+            output.WriteUInt32Optim((uint)bw);
+            output.WriteUInt32Optim((uint)bh);
 
             SetCounter("bytes|size", output.Position - pos);
             pos = output.Position;
@@ -146,7 +145,6 @@ namespace i4c
             // Encode the kinds as three planes of optim-encoded run lengths
             long pos2 = 0;
             var ms = new MemoryStream();
-            bwp = new BinaryWriterPlus(ms);
             bool curRunData = false;
             uint curRunLength = 0;
             for (int c = 0; c < 3; c++)
@@ -155,7 +153,7 @@ namespace i4c
                 {
                     if (curRunData ^ ((kinds[i] & (1 << c)) != 0))
                     {
-                        bwp.WriteUInt32Optim(curRunLength);
+                        ms.WriteUInt32Optim(curRunLength);
                         curRunData = !curRunData;
                         curRunLength = 1;
                     }
@@ -165,7 +163,7 @@ namespace i4c
                 SetCounter("kinds-raw|"+c, ms.Position - pos2);
                 pos2 = ms.Position;
             }
-            bwp.WriteUInt32Optim(curRunLength);
+            ms.WriteUInt32Optim(curRunLength);
             ms.Close();
             var kindsArr = ms.ToArray();
             SetCounter("kinds-raw|error", kindsArr.Length - pos2);
@@ -186,9 +184,8 @@ namespace i4c
                 kAcw.WriteSymbol(symb);
             kAcw.Close(false);
             var kArr = kMaster.ToArray();
-            bwp = new BinaryWriterPlus(output);
-            bwp.WriteUInt32Optim((uint)kindsArr.Length);
-            bwp.WriteUInt32Optim((uint)kArr.Length);
+            output.WriteUInt32Optim((uint)kindsArr.Length);
+            output.WriteUInt32Optim((uint)kArr.Length);
             output.Write(kArr, 0, kArr.Length);
             //Console.WriteLine("krl " + kArr.Length);
 
@@ -206,7 +203,6 @@ namespace i4c
 
             // Create the sequence of symbols that represents the run lengths for the actual pixels
             ms = new MemoryStream();
-            bwp = new BinaryWriterPlus(ms);
 
             int j = 0;
             ulong curLength = 0;
@@ -234,14 +230,14 @@ namespace i4c
 
                 if (newPixels[i] == c + 1)
                 {
-                    bwp.WriteUInt64Optim(curLength);
+                    ms.WriteUInt64Optim(curLength);
                     curLength = 0;
                 }
                 else if (newPixels[i] == 0 || newPixels[i] > c + 1)
                     curLength++;
             }
             if (curLength > 0)
-                bwp.WriteUInt64Optim(curLength);
+                ms.WriteUInt64Optim(curLength);
 
             ms.Close();
             var runLengthsArr = ms.ToArray();
@@ -257,7 +253,7 @@ namespace i4c
 
             // Save the run lengths themselves
             MemoryStream master = new MemoryStream();
-            new BinaryWriterPlus(master).WriteUInt32Optim((uint)runLengthsArr.Length);
+            master.WriteUInt32Optim((uint)runLengthsArr.Length);
             var acw = new ArithmeticCodingWriter(master, freq);
             foreach (var symb in runLengthsArr)
                 acw.WriteSymbol(symb);

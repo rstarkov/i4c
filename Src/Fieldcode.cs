@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using RT.Util.Streams;
+using RT.Util.ExtensionMethods;
 
 namespace i4c
 {
@@ -39,14 +39,13 @@ namespace i4c
 
             long pos = 0;
             MemoryStream ms = new MemoryStream();
-            BinaryWriterPlus bwp = new BinaryWriterPlus(ms);
-            bwp.WriteUInt32Optim((uint)transformed.Width);
-            bwp.WriteUInt32Optim((uint)transformed.Height);
+            ms.WriteUInt32Optim((uint)transformed.Width);
+            ms.WriteUInt32Optim((uint)transformed.Height);
             _compr.SetCounter("bytes|size", ms.Position - pos);
             pos = ms.Position;
 
             for (int p = 0; p < probs.Length; p++)
-                bwp.WriteUInt64Optim(probs[p]);
+                ms.WriteUInt64Optim(probs[p]);
             _compr.SetCounter("bytes|probs", ms.Position - pos);
             pos = ms.Position;
 
@@ -68,13 +67,12 @@ namespace i4c
         public IntField DeFieldcode(byte[] bytes)
         {
             MemoryStream ms = new MemoryStream(bytes);
-            BinaryReaderPlus brp = new BinaryReaderPlus(ms);
-            int w = brp.ReadUInt32Optim();
-            int h = brp.ReadUInt32Optim();
+            int w = ms.ReadUInt32Optim();
+            int h = ms.ReadUInt32Optim();
             IntField transformed = new IntField(w, h);
             ulong[] probs = new ulong[_symbols + 2];
             for (int p = 0; p < probs.Length; p++)
-                probs[p] = brp.ReadUInt64Optim();
+                probs[p] = ms.ReadUInt64Optim();
 
             ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6);
             ac.Decode(ms);
