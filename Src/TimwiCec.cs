@@ -8,8 +8,8 @@ namespace i4c
 {
     public class TimwiCec: Compressor
     {
-        static ulong[] kindProbsProbs = new ulong[32] { 1599, 370, 174, 137, 76, 59, 41, 36, 31, 18, 18, 21, 15, 10, 9, 5, 12, 6, 7, 8, 2, 6, 2, 4, 4, 1, 3, 7, 5, 1, 2, 128 };
-        static ulong[] runLProbsProbs = new ulong[32] { 594, 274, 294, 231, 176, 134, 84, 67, 54, 47, 54, 31, 29, 29, 13, 18, 18, 21, 16, 11, 14, 19, 6, 8, 14, 14, 8, 9, 3, 7, 7, 512 };
+        public static ulong[] kindProbsProbs = new ulong[32] { 1599, 370, 174, 137, 76, 59, 41, 36, 31, 18, 18, 21, 15, 10, 9, 5, 12, 6, 7, 8, 2, 6, 2, 4, 4, 1, 3, 7, 5, 1, 2, 128 };
+        public static ulong[] runLProbsProbs = new ulong[32] { 594, 274, 294, 231, 176, 134, 84, 67, 54, 47, 54, 31, 29, 29, 13, 18, 18, 21, 16, 11, 14, 19, 6, 8, 14, 14, 8, 9, 3, 7, 7, 512 };
 
         int blocksizeX, blocksizeY;
 

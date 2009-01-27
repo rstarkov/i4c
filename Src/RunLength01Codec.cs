@@ -3,7 +3,13 @@ using System.Collections.Generic;
 
 namespace i4c
 {
-    public class RunLength01Codec
+    public abstract class SymbolCodec
+    {
+        public abstract int[] Encode(int[] data);
+        public abstract int[] Decode(int[] data);
+    }
+
+    public class RunLength01Codec: SymbolCodec
     {
         public RunLength01Codec()
         {
@@ -26,7 +32,7 @@ namespace i4c
             // Output count every time a 1 or EOS is encountered
         }
 
-        public int[] Encode(int[] data)
+        public override int[] Encode(int[] data)
         {
             List<int> result = new List<int>();
             int pos = 0;
@@ -53,7 +59,7 @@ namespace i4c
             return result.ToArray();
         }
 
-        public int[] Decode(int[] data)
+        public override int[] Decode(int[] data)
         {
             List<int> result = new List<int>();
 
@@ -70,7 +76,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01MaxCodec
+    public class RunLength01MaxCodec: SymbolCodec
     {
         private int _maxrun;
 
@@ -80,7 +86,7 @@ namespace i4c
             _maxrun = maxrun;
         }
 
-        public int[] Encode(int[] data)
+        public override int[] Encode(int[] data)
         {
             List<int> result = new List<int>();
             int pos = 0;
@@ -114,7 +120,7 @@ namespace i4c
             return result.ToArray();
         }
 
-        public int[] Decode(int[] data)
+        public override int[] Decode(int[] data)
         {
             List<int> result = new List<int>();
 
@@ -140,7 +146,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01MaxSmartCodec
+    public class RunLength01MaxSmartCodec: SymbolCodec
     {
         private int _maxSym;
 
@@ -150,7 +156,7 @@ namespace i4c
             _maxSym = maxSym;
         }
 
-        public int[] Encode(int[] data)
+        public override int[] Encode(int[] data)
         {
             List<int> result = new List<int>();
             int pos = 0;
@@ -186,7 +192,7 @@ namespace i4c
             return result.ToArray();
         }
 
-        public int[] Decode(int[] data)
+        public override int[] Decode(int[] data)
         {
             List<int> result = new List<int>();
 

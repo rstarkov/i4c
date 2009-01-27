@@ -19,8 +19,9 @@ namespace i4c
         {
             { "alpha", typeof(I4cAlpha) },
             { "bravo", typeof(I4cBravo) },
-            { "charlie", typeof(I4cCharlie) },
             { "cec", typeof(TimwiCec) },
+            { "charlie", typeof(I4cCharlie) },
+            { "delta", typeof(I4cDelta) },
         };
 
         public static bool IsBenchmark = false;

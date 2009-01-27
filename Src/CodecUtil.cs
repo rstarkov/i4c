@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
 
 namespace i4c
@@ -28,6 +29,13 @@ namespace i4c
                 result[sym]++;
             }
             Array.Resize(ref result, maxSym + 1);
+            return result;
+        }
+
+        public static ulong[] CountValues(int[] data, int maxSymbol)
+        {
+            ulong[] result = CountValues(data);
+            Array.Resize(ref result, maxSymbol + 1);
             return result;
         }
 
@@ -151,6 +159,20 @@ namespace i4c
             return result;
         }
 
+        public static void SaveFreqsCrappy(Stream saveTo, ulong[] freqs)
+        {
+            foreach (var f in freqs)
+                saveTo.WriteUInt64Optim(f);
+        }
+
+        public static ulong[] LoadFreqsCrappy(Stream input, int maxSymbol)
+        {
+            ulong[] probs = new ulong[maxSymbol + 1];
+            for (int p = 0; p < probs.Length; p++)
+                probs[p] = input.ReadUInt64Optim();
+            return probs;
+        }
+
         public static void SaveFreqs(Stream saveTo, ulong[] freqs, ulong[] probsProbs, string id)
         {
             int count = freqs.Length;
@@ -164,14 +186,13 @@ namespace i4c
             }
             acw.Close(false);
             var arr = ms.ToArray();
-            var bwp = new BinaryWriterPlus(master);
-            bwp.WriteUInt32Optim((uint)arr.Length);
+            master.WriteUInt32Optim((uint)arr.Length);
             master.Write(arr, 0, arr.Length);
             for (int i = 0; i < count; i++)
                 if (freqs[i] >= 31)
                 {
                     freqs[i] -= freqs[i] % 31;
-                    bwp.WriteUInt64Optim(freqs[i] / 31 - 1);
+                    master.WriteUInt64Optim(freqs[i] / 31 - 1);
                 }
 
             master.Close();
@@ -179,6 +200,99 @@ namespace i4c
             saveTo.Write(arr, 0, arr.Length);
             //counters.IncSafe("freq " + id, (ulong) arr.Length);
             //Console.Write("freq " + arr.Length + "; ");
+        }
+
+        public static ulong[] GetFreqsForAllSections(IEnumerable<int[]> sections, int maxSymbol)
+        {
+            var probs = new ulong[maxSymbol + 1];
+            foreach (var section in sections)
+                foreach (var value in section)
+                    probs[value]++;
+            return probs;
+        }
+
+        public static List<int[]> FieldcodeRunlengthsEn(IntField image, SymbolCodec runlengthCodec, Compressor compr)
+        {
+            compr.AddImage(image, 0, 3, "xformed");
+            var fields = new List<int[]>();
+            for (int i = 1; i <= 3; i++)
+            {
+                IntField temp = image.Clone();
+                temp.Map(x => x == i ? 1 : 0);
+                var field = runlengthCodec.Encode(temp.Data);
+                CodecUtil.Shift(field, 1);
+                compr.SetCounter("symbols|field-"+i, field.Length);
+                fields.Add(field);
+                compr.AddImage(temp, 0, 1, "field" + i);
+            }
+            return fields;
+        }
+
+        public static IntField FieldcodeRunlengthsDe(List<int[]> fields, int width, int height, SymbolCodec runlengthCodec, Compressor compr)
+        {
+            IntField image = new IntField(width, height);
+            for (int i = 1; i <= 3; i++)
+            {
+                CodecUtil.Shift(fields[i-1], -1);
+                var f = runlengthCodec.Decode(fields[i-1]);
+
+                for (int p = 0; p < width*height; p++)
+                    if (f[p] == 1)
+                        image.Data[p] = i;
+
+                // Visualise
+                IntField img = new IntField(width, height);
+                img.Data = f;
+                compr.AddImage(img, 0, 1, "field" + i);
+            }
+            compr.AddImage(image, 0, 3, "xformed");
+            return image;
+        }
+
+        public static int[] FieldcodeRunlengthsEn2(IntField image, SymbolCodec runlengthCodec, Compressor compr)
+        {
+            compr.AddImage(image, 0, 3, "xformed");
+            List<int> data = new List<int>();
+            for (int i = 1; i <= 3; i++)
+            {
+                IntField temp = image.Clone();
+                temp.Map(x => x == i ? 1 : 0);
+                data.AddRange(temp.Data);
+                compr.AddImage(temp, 0, 1, "field" + i);
+            }
+            var runs = runlengthCodec.Encode(data.ToArray());
+            compr.SetCounter("runs", runs.Length);
+            return runs;
+        }
+
+    }
+
+    public class DeltaTracker
+    {
+        long _previous;
+
+        public DeltaTracker()
+        {
+            _previous = 0;
+        }
+
+        public DeltaTracker(long initial)
+        {
+            _previous = initial;
+        }
+
+        public int Next(int newvalue)
+        {
+            int result = newvalue - (int)_previous;
+            _previous = newvalue;
+            return result;
+        }
+
+        public long Next(long newvalue)
+        {
+            long result = newvalue - _previous;
+            _previous = newvalue;
+            return result;
         }
     }
 }

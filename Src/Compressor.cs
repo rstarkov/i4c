@@ -37,7 +37,7 @@ namespace i4c
                 if (basename.Contains("."))
                     CanonicalFileName = basename.Substring(0, basename.LastIndexOf("."));
 
-                FileStream input = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                FileStream input = File.Open(filename, FileMode.Create, FileAccess.Read, FileShare.Read);
                 IntField f = Decode(input);
                 f.ArgbFromField(0, 3);
                 string outputfilename = PathUtil.Combine(DumpDir, "decoded.png");
@@ -172,18 +172,51 @@ namespace i4c
     {
         public override void Encode(IntField image, Stream output)
         {
+            // Predictive transform
             image.PredictionEnTransformDiff(Seer, 4);
-            Fieldcode fc = new Fieldcode(this, FieldcodeSymbols);
-            byte[] bytes = fc.EnFieldcode(image);
-            output.Write(bytes, 0, bytes.Length);
+            // Convert to three fields' runlengths
+            var fields = CodecUtil.FieldcodeRunlengthsEn(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+
+            // Write size
+            DeltaTracker pos = new DeltaTracker();
+            output.WriteUInt32Optim((uint)image.Width);
+            output.WriteUInt32Optim((uint)image.Height);
+            SetCounter("bytes|size", pos.Next(output.Position));
+            // Write probs
+            ulong[] probs = CodecUtil.GetFreqsForAllSections(fields, FieldcodeSymbols + 1);
+            probs[0] = 6;
+            CodecUtil.SaveFreqsCrappy(output, probs);
+            SetCounter("bytes|probs", pos.Next(output.Position));
+            // Write fields
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6, output);
+            for (int i = 0; i < fields.Count; i++)
+            {
+                ac.WriteSection(fields[i]);
+                SetCounter("bytes|fields|"+(i+1), pos.Next(output.Position));
+            }
+            ac.Encode();
+            SetCounter("bytes|arith-err", pos.Next(output.Position));
         }
 
         public override IntField Decode(Stream input)
         {
-            Fieldcode fc = new Fieldcode(this, FieldcodeSymbols);
-            IntField f = fc.DeFieldcode(input.ReadAllBytes());
-            f.PredictionDeTransformDiff(Seer, 4);
-            return f;
+            // Read size
+            int w = input.ReadUInt32Optim();
+            int h = input.ReadUInt32Optim();
+            // Read probabilities
+            ulong[] probs = CodecUtil.LoadFreqsCrappy(input, FieldcodeSymbols + 1);
+            // Read fields
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6);
+            ac.Decode(input);
+            var fields = new List<int[]>();
+            for (int i = 1; i <= 3; i++)
+                fields.Add(ac.ReadSection());
+
+            // Undo fieldcode
+            IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+            // Undo predictive transform
+            transformed.PredictionDeTransformDiff(Seer, 4);
+            return transformed;
         }
     }
 
@@ -191,18 +224,55 @@ namespace i4c
     {
         public override void Encode(IntField image, Stream output)
         {
+            // Predictive transform
             image.PredictionEnTransformXor(Seer);
-            Fieldcode fc = new Fieldcode(this, FieldcodeSymbols);
-            byte[] bytes = fc.EnFieldcode(image);
-            output.Write(bytes, 0, bytes.Length);
+            AddImage(image, 0, 3, "xformed");
+
+            // Convert to three fields' runlengths
+            var fields = CodecUtil.FieldcodeRunlengthsEn(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+
+            // Write size
+            DeltaTracker pos = new DeltaTracker();
+            output.WriteUInt32Optim((uint)image.Width);
+            output.WriteUInt32Optim((uint)image.Height);
+            SetCounter("bytes|size", pos.Next(output.Position));
+
+            // Write probs
+            ulong[] probs = CodecUtil.GetFreqsForAllSections(fields, FieldcodeSymbols + 1);
+            probs[0] = 6;
+            CodecUtil.SaveFreqsCrappy(output, probs);
+            SetCounter("bytes|probs", pos.Next(output.Position));
+
+            // Write fields
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6, output);
+            for (int i = 0; i < fields.Count; i++)
+            {
+                ac.WriteSection(fields[i]);
+                SetCounter("bytes|fields|"+(i+1), pos.Next(output.Position));
+            }
+            ac.Encode();
+            SetCounter("bytes|arith-err", pos.Next(output.Position));
         }
 
         public override IntField Decode(Stream input)
         {
-            Fieldcode fc = new Fieldcode(this, FieldcodeSymbols);
-            IntField f = fc.DeFieldcode(input.ReadAllBytes());
-            f.PredictionDeTransformXor(Seer);
-            return f;
+            // Read size
+            int w = input.ReadUInt32Optim();
+            int h = input.ReadUInt32Optim();
+            // Read probabilities
+            ulong[] probs = CodecUtil.LoadFreqsCrappy(input, FieldcodeSymbols + 1);
+            // Read fields
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 6);
+            ac.Decode(input);
+            var fields = new List<int[]>();
+            for (int i = 1; i <= 3; i++)
+                fields.Add(ac.ReadSection());
+
+            // Undo fieldcode
+            IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+            // Undo predictive transform
+            transformed.PredictionDeTransformXor(Seer);
+            return transformed;
         }
     }
 
@@ -268,15 +338,14 @@ namespace i4c
 
             // now have: fields, covered in part by areas and in part by cutmap (only remaining cutmap left at this stage)
 
-            BinaryWriterPlus bwp = new BinaryWriterPlus(output);
             long pos = 0;
-            bwp.WriteInt32Optim(image.Width);
-            bwp.WriteInt32Optim(image.Height);
+            output.WriteInt32Optim(image.Width);
+            output.WriteInt32Optim(image.Height);
             SetCounter("bytes|size", output.Position - pos);
             pos = output.Position;
 
             for (int i = 1; i <= 3; i++)
-                bwp.WriteInt32Optim(areases[i].Count);
+                output.WriteInt32Optim(areases[i].Count);
             SetCounter("bytes|areas|count", output.Position - pos);
             pos = output.Position;
 
@@ -284,8 +353,8 @@ namespace i4c
             {
                 foreach (var area in areases[i])
                 {
-                    bwp.WriteInt32Optim(area.Left);
-                    bwp.WriteInt32Optim(area.Top);
+                    output.WriteInt32Optim(area.Left);
+                    output.WriteInt32Optim(area.Top);
                 }
                 SetCounter("bytes|areas|x,y|"+i, output.Position - pos);
                 pos = output.Position;
@@ -295,8 +364,8 @@ namespace i4c
             {
                 foreach (var area in areases[i])
                 {
-                    bwp.WriteInt32Optim(area.Width);
-                    bwp.WriteInt32Optim(area.Height);
+                    output.WriteInt32Optim(area.Width);
+                    output.WriteInt32Optim(area.Height);
                 }
                 SetCounter("bytes|areas|w,h|"+i, output.Position - pos);
                 pos = output.Position;
@@ -306,11 +375,11 @@ namespace i4c
             {
                 var pts = CodecUtil.GetPixelCoords(cutmaps[i], 1);
                 SetCounter("leftpixels|"+i, pts.Count);
-                bwp.WriteInt32Optim(pts.Count);
+                output.WriteInt32Optim(pts.Count);
                 foreach (var pt in pts)
                 {
-                    bwp.WriteInt32Optim(pt.X);
-                    bwp.WriteInt32Optim(pt.Y);
+                    output.WriteInt32Optim(pt.X);
+                    output.WriteInt32Optim(pt.Y);
                 }
             }
 
@@ -350,9 +419,9 @@ namespace i4c
             AddImage(visual.ArgbToBitmap(), "crux");
 
             var probs = CodecUtil.CountValues(symbols);
-            bwp.WriteUInt32Optim((uint)probs.Length);
+            output.WriteUInt32Optim((uint)probs.Length);
             for (int p = 0; p < probs.Length; p++)
-                bwp.WriteUInt64Optim(probs[p]);
+                output.WriteUInt64Optim(probs[p]);
             SetCounter("bytes|probs", output.Position - pos);
             pos = output.Position;
 
@@ -374,4 +443,58 @@ namespace i4c
             throw new NotImplementedException();
         }
     }
+
+    public class I4cDelta: CompressorFixedSizeFieldcode
+    {
+        public override void Encode(IntField image, Stream output)
+        {
+            // Predictive transform
+            image.PredictionEnTransformXor(Seer);
+            AddImage(image, 0, 3, "xformed");
+
+            // Convert to three fields' runlengths
+            var fields = CodecUtil.FieldcodeRunlengthsEn2(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+
+            // Write size
+            DeltaTracker pos = new DeltaTracker();
+            output.WriteUInt32Optim((uint)image.Width);
+            output.WriteUInt32Optim((uint)image.Height);
+            SetCounter("bytes|size", pos.Next(output.Position));
+
+            // Write probs
+            ulong[] probs = CodecUtil.CountValues(fields, FieldcodeSymbols);
+            CodecUtil.SaveFreqs(output, probs, TimwiCec.runLProbsProbs, "");
+            SetCounter("bytes|probs", pos.Next(output.Position));
+
+            // Write fields
+            ArithmeticCodingWriter acw = new ArithmeticCodingWriter(output, probs);
+            output.WriteUInt32Optim((uint)fields.Length);
+            foreach (var sym in fields)
+                acw.WriteSymbol(sym);
+            acw.Close(false);
+            SetCounter("bytes|fields", pos.Next(output.Position));
+        }
+
+        public override IntField Decode(Stream input)
+        {
+            // Read size
+            int w = input.ReadUInt32Optim();
+            int h = input.ReadUInt32Optim();
+            // Read probabilities
+            ulong[] probs = CodecUtil.LoadFreqsCrappy(input, FieldcodeSymbols + 1);
+            // Read fields
+            ArithmeticSectionsCodec ac = new ArithmeticSectionsCodec(probs, 3);
+            ac.Decode(input);
+            var fields = new List<int[]>();
+            for (int i = 1; i <= 3; i++)
+                fields.Add(ac.ReadSection());
+
+            // Undo fieldcode
+            IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
+            // Undo predictive transform
+            transformed.PredictionDeTransformXor(Seer);
+            return transformed;
+        }
+    }
+
 }
