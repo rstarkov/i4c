@@ -8,87 +8,49 @@ using RT.Util;
 using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
 using RT.Util.Text;
+using RT.Util.Collections;
 
 namespace i4c
 {
     public abstract class Compressor
     {
         public string Name;
-        public string Config;
+        public string CanonicalFileName;
+
+        /// <summary>Must initialise this to the default config</summary>
+        protected RVariant[] Config;
+        public string ConfigString;
 
         private Dictionary<string, double> _counters = new Dictionary<string, double>();
         public Dictionary<string, double> Counters;
 
-        public string CanonicalFileName;
+        public List<Tuple<string, IntField>> Images = new List<Tuple<string, IntField>>();
 
-        public abstract void Configure(params string[] args);
+        public virtual void Configure(params RVariant[] args)
+        {
+            for (int i = 0; i < args.Length && i < Config.Length; i++)
+                Config[i] = args[i];
+            ConfigString = Config.Select(val => (string)val).Join(",");
+        }
+
         public abstract void Encode(IntField image, Stream output);
         public abstract IntField Decode(Stream input);
 
-        public void Process(string filename, params string[] args)
+        public void AddImageGrayscale(IntField image, string caption)
         {
-            Configure(args);
-
-            string basename = Path.GetFileNameWithoutExtension(filename);
-            CanonicalFileName = basename;
-
-            if (filename.ToLower().EndsWith(".i4c"))
-            {
-                if (basename.Contains("."))
-                    CanonicalFileName = basename.Substring(0, basename.LastIndexOf("."));
-
-                FileStream input = File.Open(filename, FileMode.Create, FileAccess.Read, FileShare.Read);
-                IntField f = Decode(input);
-                f.ArgbFromField(0, 3);
-                string outputfilename = PathUtil.Combine(DumpDir, "decoded.png");
-                f.ArgbToBitmap().Save(outputfilename, ImageFormat.Png);
-                File.Copy(outputfilename, filename + ".png", true);
-            }
-            else
-            {
-                IntField f = new IntField(0, 0);
-                f.ArgbLoadFromFile(filename);
-                f.ArgbTo4c();
-                string outputfilename = PathUtil.Combine(DumpDir, "encoded.i4c");
-                Directory.CreateDirectory(Path.GetDirectoryName(outputfilename));
-                FileStream output = File.Open(outputfilename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-                Encode(f, output);
-                output.Close();
-                File.Copy(outputfilename, "{0}.{1},{2}.i4c".Fmt(basename, Name, Config), true);
-
-                computeCounterTotals();
-                saveCounters(PathUtil.Combine(DumpDir, "counters.txt"));
-            }
+            AddImageGrayscale(image, image.Data.Min(), image.Data.Max(), caption);
         }
 
-        public virtual string DumpDir
-        {
-            get
-            {
-                if (Program.IsBenchmark)
-                    return PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}".Fmt(Name, Config), CanonicalFileName);
-                else
-                    return PathUtil.Combine(PathUtil.AppPath, "i4c-output", "{0}.{1},{2}".Fmt(CanonicalFileName, Name, Config));
-            }
-        }
-
-        public void AddImage(IntField image, string caption)
-        {
-            AddImage(image, image.Data.Min(), image.Data.Max(), caption);
-        }
-
-        public void AddImage(IntField image, int min, int max, string caption)
+        public void AddImageGrayscale(IntField image, int min, int max, string caption)
         {
             IntField temp = image.Clone();
             temp.ArgbFromField(min, max);
-            AddImage(temp.ArgbToBitmap(), caption);
+            Images.Add(new Tuple<string, IntField>(caption, temp));
         }
 
-        public void AddImage(Bitmap image, string caption)
+        public void AddImageArgb(IntField image, string caption)
         {
-            MainForm.AddImageTab(image, caption);
-            Directory.CreateDirectory(DumpDir);
-            image.Save(PathUtil.Combine(DumpDir, "img-{0}.png".Fmt(caption)), ImageFormat.Png);
+            Images.Add(new Tuple<string, IntField>(caption, image.Clone()));
         }
 
         public void SetCounter(string name, double value)
@@ -107,7 +69,7 @@ namespace i4c
                 _counters.Add(name, value);
         }
 
-        private void computeCounterTotals()
+        public void ComputeCounterTotals()
         {
             Counters = new Dictionary<string, double>();
             foreach (var key in _counters.Keys)
@@ -129,27 +91,6 @@ namespace i4c
                 }
             }
         }
-
-        private void saveCounters(string filename)
-        {
-            TextTable table = new TextTable(true, TextTable.Alignment.Right);
-            table.SetAlignment(0, TextTable.Alignment.Left);
-
-            int rownum = 0;
-            int indent_prev = 0;
-            foreach (var key in Counters.Keys.Order())
-            {
-                int indent = 4 * key.ToCharArray().Count(c => c == '|');
-                if (indent < indent_prev)
-                    rownum++;
-                indent_prev = indent;
-                table[rownum, 0] = " ".Repeat(indent) + key.Split('|').Last();
-                table[rownum, 1] = Math.Round(Counters[key], 3).ToString("#,0");
-                rownum++;
-            }
-            File.WriteAllText(filename, table.GetText(0, 99999, 3, false));
-        }
-
     }
 
     public abstract class CompressorFixedSizeFieldcode: Compressor
@@ -157,14 +98,16 @@ namespace i4c
         public FixedSizeForeseer Seer;
         protected int FieldcodeSymbols;
 
-        public override void Configure(params string[] args)
+        public CompressorFixedSizeFieldcode()
         {
-            int w = args.Length > 0 ? int.Parse(args[0]) : 7;
-            int h = args.Length > 1 ? int.Parse(args[1]) : 7;
-            int x = args.Length > 2 ? int.Parse(args[2]) : 3;
-            FieldcodeSymbols = args.Length > 3 ? int.Parse(args[3]) : 1024;
-            Seer = new FixedSizeForeseer(w, h, x, new HorzVertForeseer());
-            Config = "{0},{1},{2},{3}".Fmt(w, h, x, FieldcodeSymbols);
+            Config = new RVariant[] { 7, 7, 3, 1024 };
+        }
+
+        public override void Configure(params RVariant[] args)
+        {
+            base.Configure(args);
+            FieldcodeSymbols = (int)Config[3];
+            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
         }
     }
 
@@ -173,6 +116,7 @@ namespace i4c
         public override void Encode(IntField image, Stream output)
         {
             // Predictive transform
+            image.ArgbTo4c();
             image.PredictionEnTransformDiff(Seer, 4);
             // Convert to three fields' runlengths
             var fields = CodecUtil.FieldcodeRunlengthsEn(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
@@ -216,6 +160,7 @@ namespace i4c
             IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
             // Undo predictive transform
             transformed.PredictionDeTransformDiff(Seer, 4);
+            transformed.ArgbFromField(0, 3);
             return transformed;
         }
     }
@@ -225,8 +170,8 @@ namespace i4c
         public override void Encode(IntField image, Stream output)
         {
             // Predictive transform
+            image.ArgbTo4c();
             image.PredictionEnTransformXor(Seer);
-            AddImage(image, 0, 3, "xformed");
 
             // Convert to three fields' runlengths
             var fields = CodecUtil.FieldcodeRunlengthsEn(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
@@ -272,6 +217,7 @@ namespace i4c
             IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
             // Undo predictive transform
             transformed.PredictionDeTransformXor(Seer);
+            transformed.ArgbFromField(0, 3);
             return transformed;
         }
     }
@@ -282,19 +228,22 @@ namespace i4c
         protected int FieldcodeSymbols;
         protected int ReduceBlocksize;
 
-        public override void Configure(params string[] args)
+        public I4cCharlie()
         {
-            int w = args.Length > 0 ? int.Parse(args[0]) : 7;
-            int h = args.Length > 1 ? int.Parse(args[1]) : 7;
-            int x = args.Length > 2 ? int.Parse(args[2]) : 3;
-            FieldcodeSymbols = args.Length > 3 ? int.Parse(args[3]) : 1024;
-            ReduceBlocksize = args.Length > 4 ? int.Parse(args[4]) : 32;
-            Seer = new FixedSizeForeseer(w, h, x, new HorzVertForeseer());
-            Config = "{0},{1},{2},{3},{4}".Fmt(w, h, x, FieldcodeSymbols, ReduceBlocksize);
+            Config = new RVariant[] { 7, 7, 3, 1024, 48 };
+        }
+
+        public override void Configure(params RVariant[] args)
+        {
+            base.Configure(args);
+            FieldcodeSymbols = (int)Config[3];
+            ReduceBlocksize = (int)Config[4];
+            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
         }
 
         public override void Encode(IntField image, Stream output)
         {
+            image.ArgbTo4c();
             image.PredictionEnTransformXor(Seer);
             IntField[] fields = new IntField[4];
             IntField[] cutmaps = new IntField[4];
@@ -333,7 +282,7 @@ namespace i4c
                         if (cutmaps[i][x, y] > 0)
                             vis.ShadeRect(x*ReduceBlocksize, y*ReduceBlocksize, ReduceBlocksize, ReduceBlocksize,
                                 0xFF7FFF7F, 0x00007F00);
-                AddImage(vis.ArgbToBitmap(), "vis" + i);
+                AddImageArgb(vis, "vis" + i);
             }
 
             // now have: fields, covered in part by areas and in part by cutmap (only remaining cutmap left at this stage)
@@ -416,7 +365,7 @@ namespace i4c
             int vih = (int)Math.Ceiling((double)data.Count / viw);
             IntField visual = new IntField(viw, vih);
             Array.Copy(visdata.ToArray(), visual.Data, visdata.Count);
-            AddImage(visual.ArgbToBitmap(), "crux");
+            AddImageArgb(visual, "crux");
 
             var probs = CodecUtil.CountValues(symbols);
             output.WriteUInt32Optim((uint)probs.Length);
@@ -449,8 +398,8 @@ namespace i4c
         public override void Encode(IntField image, Stream output)
         {
             // Predictive transform
+            image.ArgbTo4c();
             image.PredictionEnTransformXor(Seer);
-            AddImage(image, 0, 3, "xformed");
 
             // Convert to three fields' runlengths
             var fields = CodecUtil.FieldcodeRunlengthsEn2(image, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
@@ -493,6 +442,7 @@ namespace i4c
             IntField transformed = CodecUtil.FieldcodeRunlengthsDe(fields, w, h, new RunLength01MaxSmartCodec(FieldcodeSymbols), this);
             // Undo predictive transform
             transformed.PredictionDeTransformXor(Seer);
+            transformed.ArgbFromField(0, 3);
             return transformed;
         }
     }

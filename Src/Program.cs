@@ -9,12 +9,18 @@ using RT.Util;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
+using RT.Util.Collections;
+using System.Drawing.Imaging;
 
 namespace i4c
 {
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     static class Program
     {
+        /// <summary>
+        /// Define any new compressors in here and they will be accessible by the name
+        /// via the GUI menu or the command line.
+        /// </summary>
         public static Dictionary<string, Type> Compressors = new Dictionary<string, Type>()
         {
             { "alpha", typeof(I4cAlpha) },
@@ -23,24 +29,6 @@ namespace i4c
             { "charlie", typeof(I4cCharlie) },
             { "delta", typeof(I4cDelta) },
         };
-
-        public static bool IsBenchmark = false;
-
-        public static Compressor GetCompressor(string name)
-        {
-            if (Compressors.ContainsKey(name))
-            {
-                Compressor compr = (Compressor)Compressors[name].GetConstructor(new Type[] { }).Invoke(new object[] { });
-                compr.Name = name;
-                return compr;
-            }
-            else
-            {
-                DlgMessage.ShowError("Compressor named {0} is not defined".Fmt(name));
-                Environment.Exit(1);
-                return null;
-            }
-        }
 
         /// <summary>
         /// The main entry point for the application.
@@ -74,7 +62,7 @@ namespace i4c
                     DlgMessage.ShowError("Must also specify the name of the algorithm to benchmark");
                     return;
                 }
-                CompressBenchmark(args[1], args.Skip(2).ToArray());
+                command_Benchmark(args[1], args.Skip(2).Select(val => (RVariant)val).ToArray());
             }
             else
             {
@@ -83,24 +71,52 @@ namespace i4c
                     DlgMessage.ShowError("Must specify at least the algorithm name and the file name");
                     return;
                 }
-                CompressSingle(args[0], args[1], args.Skip(2).ToArray());
+                command_Single(args[1], args[0], args.Skip(2).Select(val => (RVariant)val).ToArray());
             }
         }
 
-        private static void CompressSingle(string algName, string fileName, string[] algArgs)
+        /// <summary>
+        /// Creates a new compressor of a specified name. Use to obtain an actual compressor
+        /// instance given an algorithm name.
+        /// </summary>
+        public static Compressor GetCompressor(string name)
+        {
+            if (Compressors.ContainsKey(name))
+            {
+                Compressor compr = (Compressor)Compressors[name].GetConstructor(new Type[] { }).Invoke(new object[] { });
+                compr.Name = name;
+                return compr;
+            }
+            else
+            {
+                DlgMessage.ShowError("Compressor named {0} is not defined".Fmt(name));
+                Environment.Exit(1);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Processes the "compress/decompress single file" command-line command.
+        /// </summary>
+        private static void command_Single(string algName, string filename, RVariant[] algArgs)
         {
             Compressor compr = GetCompressor(algName);
             if (compr == null)
                 return;
 
             WaitFormShow("processing...");
-            compr.Process(fileName, algArgs);
+
+            compr.Configure(algArgs);
+            CompressDecompressSingle(compr, filename);
+
             WaitFormHide();
         }
 
-        private static void CompressBenchmark(string algName, string[] algArgs)
+        /// <summary>
+        /// Processes the "benchmark algorithm on all files" command-line command.
+        /// </summary>
+        private static void command_Benchmark(string algName, RVariant[] algArgs)
         {
-            IsBenchmark = true;
             WaitFormShow("benchmarking...");
 
             Dictionary<string, Compressor> compressors = new Dictionary<string, Compressor>();
@@ -110,8 +126,16 @@ namespace i4c
             // Queue all jobs...
             foreach (var file in compressors.Keys)
             {
-                Func<Compressor, string, string[], WaitCallback> makeCallback = (compr, fname, arg) => (dummy2 => compr.Process(fname, arg));
-                ThreadPool.QueueUserWorkItem(makeCallback(compressors[file], file, algArgs));
+                Compressor compr = compressors[file];
+                compr.Configure(algArgs);
+                compr.CanonicalFileName = Path.GetFileNameWithoutExtension(file);
+                string sourcePath = file;
+                string destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}".Fmt(algName, compr.ConfigString), compr.CanonicalFileName);
+                string destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, algName, compr.ConfigString);
+
+                Func<Compressor, string, string, string, WaitCallback> makeCallback =
+                    (v1, v2, v3, v4) => (dummy2 => CompressFile(v1, v2, v3, v4));
+                ThreadPool.QueueUserWorkItem(makeCallback(compr, sourcePath, destDir, destFile));
             }
             // ...and wait until they're finished.
             int worker = 0, dummy;
@@ -160,9 +184,102 @@ namespace i4c
                         table[rownum, colnum++] = "N/A";
                 rownum++;
             }
-            File.WriteAllText(PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().Config)), table.GetText(0, 99999, 3, false));
+            File.WriteAllText(PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().ConfigString)), table.GetText(0, 99999, 3, false));
 
             WaitFormHide();
+        }
+
+        /// <summary>
+        /// Compresses/decompresses a single file, saving all outputs where appropriate. Places a copy
+        /// of the resulting file in the application directory.
+        /// </summary>
+        public static void CompressDecompressSingle(Compressor compr, string filename)
+        {
+            string basename = Path.GetFileNameWithoutExtension(filename);
+            compr.CanonicalFileName = basename;
+
+            if (filename.ToLower().EndsWith(".i4c"))
+            {
+                if (basename.Contains("."))
+                    compr.CanonicalFileName = basename.Substring(0, basename.LastIndexOf("."));
+                var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "decode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
+                var destFile = "{0}.{1},{2}.png".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
+                DecompressFile(compr, filename, destDir, destFile);
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile));
+            }
+            else
+            {
+                var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "encode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
+                var destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
+                CompressFile(compr, filename, destDir, destFile);
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile));
+            }
+        }
+
+        /// <summary>
+        /// Compresses a single file using a given compressor, saving all debug or
+        /// visualisation outputs to the specified directory.
+        /// </summary>
+        public static void CompressFile(Compressor compr, string sourcePath, string destDir, string destFile)
+        {
+            IntField image = new IntField(0, 0);
+            image.ArgbLoadFromFile(sourcePath);
+
+            Directory.CreateDirectory(destDir);
+            FileStream output = File.Open(PathUtil.Combine(destDir, destFile), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            compr.Encode(image, output);
+            output.Close();
+
+            SaveComprImages(compr, destDir);
+            SaveComprCounters(compr, destDir);
+        }
+
+        /// <summary>
+        /// Decompresses a single file using a given compressor, saving all debug or
+        /// visualisation outputs to the specified directory.
+        /// </summary>
+        public static void DecompressFile(Compressor compr, string sourcePath, string destDir, string destFile)
+        {
+            FileStream input = File.Open(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            IntField f = compr.Decode(input);
+            input.Close();
+
+            Directory.CreateDirectory(destDir);
+            f.ArgbToBitmap().Save(PathUtil.Combine(destDir, destFile), ImageFormat.Png);
+            SaveComprImages(compr, destDir);
+            SaveComprCounters(compr, destDir);
+        }
+
+        private static void SaveComprImages(Compressor compr, string destDir)
+        {
+            foreach (var imgtuple in compr.Images)
+            {
+                imgtuple.E2.ArgbToBitmap().Save(PathUtil.Combine(destDir, "image-{0}.png".Fmt(imgtuple.E1)), ImageFormat.Png);
+                MainForm.AddImageTab(imgtuple.E2, imgtuple.E1);
+            }
+
+        }
+
+        private static void SaveComprCounters(Compressor compr, string destDir)
+        {
+            TextTable table = new TextTable(true, TextTable.Alignment.Right);
+            table.SetAlignment(0, TextTable.Alignment.Left);
+            compr.ComputeCounterTotals();
+
+            int rownum = 0;
+            int indent_prev = 0;
+            foreach (var key in compr.Counters.Keys.Order())
+            {
+                int indent = 4 * key.ToCharArray().Count(c => c == '|');
+                if (indent < indent_prev)
+                    rownum++;
+                indent_prev = indent;
+                table[rownum, 0] = " ".Repeat(indent) + key.Split('|').Last();
+                table[rownum, 1] = Math.Round(compr.Counters[key], 3).ToString("#,0");
+                rownum++;
+            }
+
+            File.WriteAllText(PathUtil.Combine(destDir, "counters.txt"), table.GetText(0, 99999, 3, false));
         }
 
         #region WaitForm

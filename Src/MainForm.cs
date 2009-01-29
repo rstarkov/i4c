@@ -13,7 +13,7 @@ namespace i4c
     public partial class MainForm: Form
     {
         public static MainForm TheInstance;
-        public static Queue<Tuple<IntField, string>> Images = new Queue<Tuple<IntField, string>>();
+        public static Queue<Tuple<string, IntField>> Images = new Queue<Tuple<string, IntField>>();
 
         public class Settings
         {
@@ -38,18 +38,18 @@ namespace i4c
             if (input == null)
                 return;
             var args = input.Split(' ');
-            Func<Compressor, string, string[], WaitCallback> makeCallback = (_compr, _fname, _args) => (dummy => _compr.Process(_fname, _args));
-            ThreadPool.QueueUserWorkItem(makeCallback(compr, args[0], args.Skip(1).ToArray()));
+            compr.Configure(args.Skip(1).Select(val => (RVariant)val).ToArray());
+            ThreadPool.QueueUserWorkItem(dummy => Program.CompressDecompressSingle(compr, args[0]));
         }
 
-        public static void AddImageTab(Bitmap image, string caption)
+        public static void AddImageTab(IntField argb, string caption)
         {
             if (TheInstance == null) // we're running in command line mode
                 return;
 
             lock (Images)
             {
-                Images.Enqueue(new Tuple<IntField, string>(new IntField(image), caption));
+                Images.Enqueue(new Tuple<string, IntField>(caption, argb));
             }
         }
 
@@ -87,13 +87,13 @@ namespace i4c
                     var data = Images.Dequeue();
 
                     TabPage page = new TabPage();
-                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.E2==null ? "" : (": " + data.E2));
+                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.E1==null ? "" : (": " + data.E1));
                     TheInstance.tabsMain.TabPages.Add(page);
                     TheInstance.tabsMain.Visible = true;
 
                     DoubleBufferedPanel panel = new DoubleBufferedPanel();
                     panel.Dock = DockStyle.Fill;
-                    panel.Tag = data.E1.ArgbToBitmap();
+                    panel.Tag = data.E2.ArgbToBitmap();
                     panel.PaintBuffer += new PaintEventHandler(TheInstance.panel_PaintBuffer);
                     page.Controls.Add(panel);
 

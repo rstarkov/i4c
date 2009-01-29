@@ -213,7 +213,7 @@ namespace i4c
 
         public static List<int[]> FieldcodeRunlengthsEn(IntField image, SymbolCodec runlengthCodec, Compressor compr)
         {
-            compr.AddImage(image, 0, 3, "xformed");
+            compr.AddImageGrayscale(image, 0, 3, "xformed");
             var fields = new List<int[]>();
             for (int i = 1; i <= 3; i++)
             {
@@ -223,7 +223,7 @@ namespace i4c
                 CodecUtil.Shift(field, 1);
                 compr.SetCounter("symbols|field-"+i, field.Length);
                 fields.Add(field);
-                compr.AddImage(temp, 0, 1, "field" + i);
+                compr.AddImageGrayscale(temp, 0, 1, "field" + i);
             }
             return fields;
         }
@@ -243,22 +243,22 @@ namespace i4c
                 // Visualise
                 IntField img = new IntField(width, height);
                 img.Data = f;
-                compr.AddImage(img, 0, 1, "field" + i);
+                compr.AddImageGrayscale(img, 0, 1, "field" + i);
             }
-            compr.AddImage(image, 0, 3, "xformed");
+            compr.AddImageGrayscale(image, 0, 3, "xformed");
             return image;
         }
 
         public static int[] FieldcodeRunlengthsEn2(IntField image, SymbolCodec runlengthCodec, Compressor compr)
         {
-            compr.AddImage(image, 0, 3, "xformed");
+            compr.AddImageGrayscale(image, 0, 3, "xformed");
             List<int> data = new List<int>();
             for (int i = 1; i <= 3; i++)
             {
                 IntField temp = image.Clone();
                 temp.Map(x => x == i ? 1 : 0);
                 data.AddRange(temp.Data);
-                compr.AddImage(temp, 0, 1, "field" + i);
+                compr.AddImageGrayscale(temp, 0, 1, "field" + i);
             }
             var runs = runlengthCodec.Encode(data.ToArray());
             compr.SetCounter("runs", runs.Length);

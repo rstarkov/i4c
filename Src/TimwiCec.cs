@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
+using RT.Util.Collections;
 
 namespace i4c
 {
@@ -13,11 +14,16 @@ namespace i4c
 
         int blocksizeX, blocksizeY;
 
-        public override void Configure(params string[] args)
+        public TimwiCec()
         {
-            blocksizeX = args.Length > 0 ? int.Parse(args[0]) : 8;
-            blocksizeY = args.Length > 1 ? int.Parse(args[1]) : 8;
-            Config = "{0},{1}".Fmt(blocksizeX, blocksizeY);
+            Config = new RVariant[] { 8, 8 };
+        }
+
+        public override void Configure(params RVariant[] args)
+        {
+            base.Configure(args);
+            blocksizeX = (int)Config[0];
+            blocksizeY = (int)Config[1];
         }
 
         public override void Encode(IntField source, Stream output)
@@ -29,6 +35,7 @@ namespace i4c
             int blocksY = (bh + blocksizeY - 1) / blocksizeY;
             int blocks = blocksX * blocksY;
 
+            source.ArgbTo4c();
             uint[] pixels = source.Data.Select(px => (uint)px).ToArray();
 
             var newPixels = new uint[pixels.Length];
