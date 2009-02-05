@@ -173,6 +173,10 @@ namespace i4c
             return probs;
         }
 
+        /// <summary>
+        /// USAGE WARNING: this modifies "freqs", and the /modified/ version is the one
+        /// that is actually saved. Make sure to use the modified version in arithmetic codec.
+        /// </summary>
         public static void SaveFreqs(Stream saveTo, ulong[] freqs, ulong[] probsProbs, string id)
         {
             int count = freqs.Length;
@@ -200,6 +204,22 @@ namespace i4c
             saveTo.Write(arr, 0, arr.Length);
             //counters.IncSafe("freq " + id, (ulong) arr.Length);
             //Console.Write("freq " + arr.Length + "; ");
+        }
+
+        public static ulong[] LoadFreqs(Stream readFrom, ulong[] probsProbs, int numFreqs)
+        {
+            var len = readFrom.ReadUInt32Optim();
+            byte[] arr = new byte[len];
+            readFrom.Read(arr, 0, len);
+            var acr = new ArithmeticCodingReader(new MemoryStream(arr), probsProbs);
+            var freqs = new ulong[numFreqs];
+            for (int i = 0; i < numFreqs; i++)
+                freqs[i] = (ulong)acr.ReadSymbol();
+            acr.Close();
+            for (int i = 0; i < numFreqs; i++)
+                if (freqs[i] == 31)
+                    freqs[i] = (readFrom.ReadUInt64Optim() + 1) * 31;
+            return freqs;
         }
 
         public static ulong[] GetFreqsForAllSections(IEnumerable<int[]> sections, int maxSymbol)
@@ -265,6 +285,208 @@ namespace i4c
             return runs;
         }
 
+        public static IntField FieldcodeRunlengthsDe2(int[] runs, int width, int height, SymbolCodec runlengthCodec, Compressor compr)
+        {
+            IntField image = new IntField(width, height);
+            var data = runlengthCodec.Decode(runs);
+            for (int i = 1; i <= 3; i++)
+            {
+                int offs = width*height * (i-1);
+                for (int p = 0; p < width*height; p++)
+                    if (data[offs + p] == 1)
+                        image.Data[p] = i;
+
+                // Visualise
+                IntField img = new IntField(width, height);
+                Array.Copy(data, offs, img.Data, 0, width*height);
+                compr.AddImageGrayscale(img, 0, 1, "field" + i);
+            }
+            compr.AddImageGrayscale(image, 0, 3, "xformed");
+            return image;
+        }
+
+        public static IntField BackgroundFilterThin(IntField image, int w1passes, int w2passes)
+        {
+            image = image.Clone();
+
+            bool changed = true;
+            int counter = 0;
+            while (changed)
+            {
+                changed = false;
+                for (int y = 0; y < image.Height; y++)
+                    for (int x = 1; x < image.Width-1; x++)
+                        if (image[x-1, y] == image[x+1, y] && image[x, y] != image[x-1, y])
+                        {
+                            image[x, y] = image[x-1, y];
+                            changed = true;
+                        }
+
+                for (int x = 0; x < image.Width; x++)
+                    for (int y = 1; y < image.Height-1; y++)
+                        if (image[x, y-1] == image[x, y+1] && image[x, y] != image[x, y-1])
+                        {
+                            image[x, y] = image[x, y-1];
+                            changed = true;
+                        }
+
+                counter++;
+                if (counter >= w1passes)
+                    break;
+            }
+
+            changed = true;
+            counter = 0;
+            while (changed)
+            {
+                changed = false;
+                for (int y = 0; y < image.Height; y++)
+                    for (int x = 2; x < image.Width-1; x++)
+                    {
+                        if (image[x-2, y] == image[x+1, y] && image[x, y] != image[x-2, y])
+                        {
+                            image[x, y] = image[x-2, y];
+                            changed = true;
+                        }
+                        if (image[x-2, y] == image[x+1, y] && image[x-1, y] != image[x-2, y])
+                        {
+                            image[x-1, y] = image[x-2, y];
+                            changed = true;
+                        }
+                    }
+
+                for (int x = 0; x < image.Width; x++)
+                    for (int y = 2; y < image.Height-1; y++)
+                        if (image[x, y-2] == image[x, y+1] && image[x, y-1] != image[x, y-2])
+                        {
+                            image[x, y-1] = image[x, y-2];
+                            changed = true;
+                        }
+
+                counter++;
+                if (counter >= w2passes)
+                    break;
+            }
+
+            return image;
+        }
+
+        public static IntField BackgroundFilterSmall(IntField image, int areaThresh)
+        {
+            image = image.Clone();
+            IntField processed = image.Clone();
+            // 0..3 - original unprocessed colors
+            // -1   - accepted as background
+            // -2   - trial fill / kept for later elimination
+            for (int y = 0; y < image.Height; y++)
+                for (int x = 0; x < image.Width; x++)
+                    if (processed[x, y] >= 0)
+                    {
+                        // Do trial fill
+                        processed.Floodfill(x, y, -2);
+                        // Accept as background?
+                        if (processed.Counter_Floodfill_TotalPixels > areaThresh)
+                            processed.Floodfill(x, y, -1);
+                    }
+
+            for (int p = 0; p < image.Data.Length; p++)
+                if (processed.Data[p] == -2)
+                    image.Data[p] = -2;
+
+            for (int y = 0; y < image.Height; y++)
+                for (int x = 0; x < image.Width; x++)
+                    if (processed[x, y] == -2)
+                    {
+                        if (x > 0 && processed[x-1, y] == -1)
+                        {
+                            image.Floodfill(x, y, image[x-1, y]);
+                            processed.Floodfill(x, y, -3);
+                        }
+                        else if (y > 0 && processed[x, y-1] == -1)
+                        {
+                            image.Floodfill(x, y, image[x, y-1]);
+                            processed.Floodfill(x, y, -3);
+                        }
+                        else if (x < image.Width-1 && processed[x+1, y] == -1)
+                        {
+                            image.Floodfill(x, y, image[x+1, y]);
+                            processed.Floodfill(x, y, -3);
+                        }
+                        else if (y < image.Height-1 && processed[x, y+1] == -1)
+                        {
+                            image.Floodfill(x, y, image[x, y+1]);
+                            processed.Floodfill(x, y, -3);
+                        }
+                    }
+
+            return image;
+        }
+
+        public static int[] BitImageToLineSymbols(IntField image, int lineheight)
+        {
+            int[] result = new int[image.Width * ((image.Height + lineheight - 1) / lineheight)];
+            int p = 0;
+            for (int ly = 0; ly < image.Height; ly+=lineheight)
+            {
+                for (int x = 0; x < image.Width; x++)
+                {
+                    int val = 0;
+                    for (int y = ly; y < ly+lineheight && y < image.Height; y++)
+                        val = (val << 1) | (image[x, y] == 0 ? 0 : 1);
+                    result[p++] = val;
+                }
+            }
+            return result;
+        }
+
+        public static int[] LzwLinesEn(IntField bitfield, int lineheight, int backadd)
+        {
+            int[] symbols = BitImageToLineSymbols(bitfield, lineheight);
+            LzwCodec lzw = new LzwCodec(1 << lineheight);
+            return lzw.Encode(symbols);
+        }
+
+        public static int[] InterleaveNegatives(int[] data)
+        {
+            int[] res = (int[])data.Clone();
+            for (int i = 0; i < res.Length; i++)
+                res[i] = (res[i] <= 0) ? (-2*res[i]) : (2*res[i] - 1);
+            return res;
+        }
+
+        public static ulong[] GetNextProbsGiven(int[] vals, int given)
+        {
+            ulong[] result = new ulong[16];
+            int prev = 0;
+            for (int i = 1; i < vals.Length; i++)
+            {
+                if (prev == given)
+                {
+                    if (vals[i] >= result.Length)
+                        Array.Resize(ref result, (vals[i]+1) * 3 / 2);
+                    result[vals[i]]++;
+                }
+                prev = vals[i];
+            }
+            return result;
+        }
+
+        public static ulong[] GetNextProbsGivenGreater(int[] vals, int given)
+        {
+            ulong[] result = new ulong[16];
+            int prev = 0;
+            for (int i = 1; i < vals.Length; i++)
+            {
+                if (prev > given)
+                {
+                    if (vals[i] >= result.Length)
+                        Array.Resize(ref result, (vals[i]+1) * 3 / 2);
+                    result[vals[i]]++;
+                }
+                prev = vals[i];
+            }
+            return result;
+        }
     }
 
     public class DeltaTracker

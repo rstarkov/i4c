@@ -1,30 +1,25 @@
-- with xordiff encoding: encode blocks, eg 4x4
-- encode rectangles that are punched out of each color plane, akin to kinds encoding
-  - create a low-res image where every pixel is only black if the entire rectangle was black
+do try lzw on regions where whitespace is excluded. Try limiting the length of words created. Try visualising to ensure it works
+find black regions instead of white - these can overlap. Pick them in the order where next rect adds the most new black coverage
+for white regions: don't encode height, encode end of stream instead?
+encode runs as optim + arith?
 
-* bring-to-front filter:
-  - initially map all symbols to themselves
-  - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
+encode pixel positions relative to the previous pixel, both vertically and horizontally.
+
+
+skip pixels already encoded in one field?
 
 * arithmetic codec which adjusts probabilities on the go:
   - start with all probabilities at 1 up to max symbol
   - every time after encoding a symbol increment its probability
 
+- with xordiff encoding: encode blocks, eg 4x4
+
+* bring-to-front filter:
+  - initially map all symbols to themselves
+  - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
+
 * burrows-wheeler
 
-
-
-* x/y methods in IntField
-* stop using Position in foreseeers
-
-* pick best size
-* full encode/decode
-* save intermediate png's
-
-* queue images and allow to flick through them. Also add scrolling. Generate them in a separate thread
-
-
-SELECT-AND-FILTER IN ONE GO
 
 
 

@@ -26,8 +26,12 @@ namespace i4c
             { "alpha", typeof(I4cAlpha) },
             { "bravo", typeof(I4cBravo) },
             { "cec", typeof(TimwiCec) },
-            { "charlie", typeof(I4cCharlie) },
             { "delta", typeof(I4cDelta) },
+            { "xp-rects", typeof(XperimentRects) },
+            { "xp-pdiff", typeof(XperimentPdiff) },
+            { "xp-split", typeof(XperimentSplit) },
+            { "xp-backlzw", typeof(XperimentBackLzw) },
+            { "xp-resolutions", typeof(XperimentResolution) },
         };
 
         /// <summary>
@@ -36,6 +40,7 @@ namespace i4c
         [STAThread]
         static void Main(string[] args)
         {
+            //CodecTests.TestRandom();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -205,14 +210,14 @@ namespace i4c
                 var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "decode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.png".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 DecompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile));
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile), true);
             }
             else
             {
                 var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "encode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 CompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile));
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile), true);
             }
         }
 
@@ -226,11 +231,12 @@ namespace i4c
             image.ArgbLoadFromFile(sourcePath);
 
             Directory.CreateDirectory(destDir);
-            FileStream output = File.Open(PathUtil.Combine(destDir, destFile), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            FileStream output = File.Open(PathUtil.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read);
             compr.Encode(image, output);
             output.Close();
 
             SaveComprImages(compr, destDir);
+            SaveComprDumps(compr, destDir);
             SaveComprCounters(compr, destDir);
         }
 
@@ -247,6 +253,7 @@ namespace i4c
             Directory.CreateDirectory(destDir);
             f.ArgbToBitmap().Save(PathUtil.Combine(destDir, destFile), ImageFormat.Png);
             SaveComprImages(compr, destDir);
+            SaveComprDumps(compr, destDir);
             SaveComprCounters(compr, destDir);
         }
 
@@ -258,6 +265,18 @@ namespace i4c
                 MainForm.AddImageTab(imgtuple.E2, imgtuple.E1);
             }
 
+        }
+
+        private static void SaveComprDumps(Compressor compr, string destDir)
+        {
+            foreach (var dumpname in compr.Dumps.Keys)
+            {
+                CsvTable table = new CsvTable();
+                var dumpdata = compr.Dumps[dumpname];
+                for (int i = 0; i < dumpdata.Length; i++)
+                    table[i, 0] = dumpdata[i];
+                table.SaveToFile(PathUtil.Combine(destDir, "dump-{0}.csv".Fmt(dumpname)));
+            }
         }
 
         private static void SaveComprCounters(Compressor compr, string destDir)
@@ -305,4 +324,5 @@ namespace i4c
 
         #endregion
     }
+
 }

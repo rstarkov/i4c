@@ -101,17 +101,17 @@ namespace i4c
             foreach (var sym in data)
             {
                 var wordsym = word + sym;
-                if (dict.ContainsKey(wordsym) && sym < 16)
+                if (dict.ContainsKey(wordsym))// && (wordsym.Length < 8))
                     word = wordsym;
                 else
                 {
                     if (word.Arr.Length > 0)
                         result.Add(dict[word]);
-                    if (wordsym.Arr.All(val => val < 16))
-                    {
+                    //if (wordsym.Arr.All(val => val < 16))
+                    //{
                         dict.Add(wordsym, nextSym);
                         nextSym++;
-                    }
+                    //}
                     word = new IntString(sym);
                 }
             }
