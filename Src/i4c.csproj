@@ -59,7 +59,6 @@
     <Compile Include="ArithmeticCodec.cs" />
     <Compile Include="CodecUtil.cs" />
     <Compile Include="Compressor.cs" />
-    <Compile Include="CsvTable.cs" />
     <Compile Include="Foreseer.cs" />
     <Compile Include="IntField.cs" />
     <Compile Include="LzwCodec.cs" />
