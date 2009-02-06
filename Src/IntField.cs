@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using RT.Util;
 using RT.Util.Drawing;
+using System.Collections.Generic;
+using RT.Util.Collections;
 
 namespace i4c
 {
@@ -58,6 +60,24 @@ namespace i4c
                 else
                     Data[y * Width + x] = value;
             }
+        }
+
+        public int GetWrapped(int x, int y)
+        {
+            x = x % Width;
+            if (x < 0) x += Width;
+            y = y % Height;
+            if (y < 0) y += Height;
+            return Data[y * Width + x];
+        }
+
+        public void SetWrapped(int x, int y, int value)
+        {
+            x = x % Width;
+            if (x < 0) x += Width;
+            y = y % Height;
+            if (y < 0) y += Height;
+            Data[y * Width + x] = value;
         }
 
         public IntField Clone()
@@ -127,10 +147,73 @@ namespace i4c
 
         public void ArgbFromField(int min, int max)
         {
-            for (int p = 0; p < Width*Height; p++)
+            if (min == max)
             {
-                int val = (255 * (Data[p] - min)) / (max - min);
-                Data[p] = (255 << 24) | (val << 16) | (val << 8) | val;
+                for (int p = 0; p < Width*Height; p++)
+                    Data[p] = unchecked((int)0xFF000000);
+            }
+            else
+                for (int p = 0; p < Width*Height; p++)
+                {
+                    int val = (255 * (Data[p] - min)) / (max - min);
+                    Data[p] = (255 << 24) | (val << 16) | (val << 8) | val;
+                }
+        }
+
+        public int Counter_Floodfill_TotalPixels;
+
+        public void Floodfill(int x, int y, int newcolor)
+        {
+            Counter_Floodfill_TotalPixels = 0;
+            IntField done = new IntField(Width, Height);
+            Queue<Point> queue = new Queue<Point>();
+            queue.Enqueue(new Point(x, y));
+            int oldcolor = this[x, y];
+
+            while (queue.Count > 0)
+            {
+                Point pt = queue.Dequeue();
+                x = pt.X;
+                y = pt.Y;
+                bool inRunAbove = false;
+                bool inRunBelow = false;
+
+                // Move leftwards as far as possible
+                while (x > 0 && this[x-1, y] == oldcolor && done[x-1, y] == 0)
+                    x--;
+
+                // Floodfill to the right
+                while (x < Width && this[x, y] == oldcolor && done[x, y] == 0)
+                {
+                    this[x, y] = newcolor;
+                    done[x, y] = 1;
+                    Counter_Floodfill_TotalPixels++;
+
+                    // Check above
+                    if (y > 0)
+                    {
+                        if (!inRunAbove && this[x, y-1] == oldcolor && done[x, y-1] == 0)
+                        {
+                            queue.Enqueue(new Point(x, y-1));
+                            inRunAbove = true;
+                        }
+                        else if (inRunAbove && this[x, y-1] != oldcolor)
+                            inRunAbove = false;
+                    }
+                    // Check below
+                    if (y < Height-1)
+                    {
+                        if (!inRunBelow && this[x, y+1] == oldcolor && done[x, y+1] == 0)
+                        {
+                            queue.Enqueue(new Point(x, y+1));
+                            inRunBelow = true;
+                        }
+                        else if (inRunBelow && this[x, y+1] != oldcolor)
+                            inRunBelow = false;
+                    }
+
+                    x++;
+                }
             }
         }
 
@@ -287,6 +370,49 @@ namespace i4c
                 Array.Copy(Data, y*Width + fx, res, (y - fy) * w, w);
             return res;
         }
+
+        public IntField HalfResNearestNeighbour()
+        {
+            IntField result = new IntField((Width+1)/2, (Height+1)/2);
+            for (int x = 0; x < Width; x += 2)
+                for (int y = 0; y < Height; y += 2)
+                    result[x>>1, y>>1] = this[x, y];
+            return result;
+        }
+
+        public IntField HalfResHighestCount()
+        {
+            IntField result = new IntField((Width+1)/2, (Height+1)/2);
+            for (int x = 0; x < Width; x += 2)
+                for (int y = 0; y < Height; y += 2)
+                    result[x>>1, y>>1] = MostFrequent(this[x, y], this[x+1, y], this[x, y+1], this[x+1, y+1]);
+            return result;
+        }
+
+        public int MostFrequent(int p1, int p2, int p3, int p4)
+        {
+            bool e12 = p1 == p2;
+            bool e13 = p1 == p3;
+            bool e14 = p1 == p4;
+            bool e23 = p2 == p3;
+            bool e24 = p2 == p4;
+            bool e34 = p3 == p4;
+            // Three or four same vals
+            if (e12 && e13 || e12 && e14 || e13 && e14)
+                return p1;
+            if (e23 && e34)
+                return p2;
+            // Two same vals
+            if (e12 || e13 || e14)
+                return p1;
+            if (e23 || e24)
+                return p2;
+            if (e34)
+                return p3;
+            // All different
+            return p1;
+        }
+
     }
 
 }

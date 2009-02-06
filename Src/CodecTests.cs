@@ -4,6 +4,7 @@ using NUnit.Framework;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 using System.Linq;
+using System.IO;
 
 namespace i4c
 {
@@ -60,7 +61,7 @@ namespace i4c
         {
             for (int iter = 0; iter < 10000; iter++)
             {
-                int symDataMax = Ut.RndInt(1, 20);
+                int symDataMax = Ut.RndInt(1, 50);
                 int rlStages = Ut.RndInt(1, 4);
                 int symRles = Ut.RndInt(1, Math.Min(symDataMax, 3));
                 int symMax = Ut.RndInt(symDataMax + rlStages*symRles, symDataMax + rlStages*symRles + 10);
@@ -72,7 +73,7 @@ namespace i4c
                 if (Ut.RndDouble() < 0.5)
                     dataLen = Ut.RndInt(0, 10);
                 else
-                    dataLen = Ut.RndInt(0, 50000);
+                    dataLen = Ut.RndInt(0, 5000);
 
                 List<int> data = new List<int>();
                 while (dataLen > 0)
@@ -123,10 +124,19 @@ namespace i4c
                 //trip = deczm.Decode(enczm.Encode(data));
                 //Assert.IsTrue(data.SequenceEqual(trip));
 
-                RunLength01MaxSmartCodec enczs = new RunLength01MaxSmartCodec(15);
-                RunLength01MaxSmartCodec deczs = new RunLength01MaxSmartCodec(15);
-                trip = deczs.Decode(enczs.Encode(data));
-                Assert.IsTrue(data.SequenceEqual(trip));
+                //RunLength01MaxSmartCodec enczs = new RunLength01MaxSmartCodec(15);
+                //RunLength01MaxSmartCodec deczs = new RunLength01MaxSmartCodec(15);
+                //trip = deczs.Decode(enczs.Encode(data));
+                //Assert.IsTrue(data.SequenceEqual(trip));
+            }
+
+            {
+                ulong[] input = data.Select(val => (ulong)val).ToArray();
+                MemoryStream ms = new MemoryStream();
+                CodecUtil.SaveFreqs(ms, input, TimwiCec.runLProbsProbs, "");
+                ms.Position = 0;
+                ulong[] freqs = CodecUtil.LoadFreqs(ms, TimwiCec.runLProbsProbs, data.Length);
+                Assert.IsTrue(input.SequenceEqual(freqs));
             }
         }
     }
