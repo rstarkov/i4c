@@ -268,11 +268,11 @@ namespace i4c
             SetCounter("bytes|probs", pos.Next(output.Position));
 
             // Write fields
-            ArithmeticCodingWriter acw = new ArithmeticCodingWriter(output, probs);
+            ArithmeticWriter aw = new ArithmeticWriter(output, probs);
             output.WriteUInt32Optim((uint)fields.Length);
             foreach (var sym in fields)
-                acw.WriteSymbol(sym);
-            acw.Close(false);
+                aw.WriteSymbol(sym);
+            aw.Flush();
             SetCounter("bytes|fields", pos.Next(output.Position));
         }
 
@@ -451,12 +451,12 @@ namespace i4c
             SetCounter("bytes|probs", output.Position - pos);
             pos = output.Position;
 
-            ArithmeticCodingWriter acw = new ArithmeticCodingWriter(output, probs);
+            ArithmeticWriter aw = new ArithmeticWriter(output, probs);
             foreach (int sym in symbols)
-                acw.WriteSymbol(sym);
+                aw.WriteSymbol(sym);
             SetCounter("bytes|crux", output.Position - pos);
             pos = output.Position;
-            acw.Close(false);
+            aw.Flush();
 
             // BETTER RLE - RUNS OF 1'S
             // ARITH THE AREAS

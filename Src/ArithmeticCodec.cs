@@ -21,7 +21,7 @@ namespace i4c
         private int _curbit;
 
         /// <summary>
-        /// Initialises an <see cref="ArithmeticCodingWriter"/> instance given a base stream and a set of byte probabilities.
+        /// Initialises an <see cref="ArithmeticWriter"/> instance given a base stream and a set of byte probabilities.
         /// </summary>
         /// <param name="basestr">The base stream to which the compressed data will be written.</param>
         /// <param name="probabilities">The probability of each byte occurring. Can be null, in which 
@@ -149,11 +149,11 @@ namespace i4c
         public byte[] Encode(int[] data)
         {
             MemoryStream ms = new MemoryStream();
-            ArithmeticCodingWriter acw = new ArithmeticCodingWriter(ms, _probs);
+            ArithmeticWriter aw = new ArithmeticWriter(ms, _probs);
             foreach (var sym in data)
-                acw.WriteSymbol(sym);
-            acw.WriteSymbol(_symEnd);
-            acw.Close(false);
+                aw.WriteSymbol(sym);
+            aw.WriteSymbol(_symEnd);
+            aw.Flush();
             return ms.ToArray();
         }
 
@@ -179,7 +179,7 @@ namespace i4c
         private ulong[] _probs;
         private int _symEnd;
         private MemoryStream _memStream;
-        private ArithmeticCodingWriter _arithWriter;
+        private ArithmeticWriter _arithWriter;
         private ArithmeticCodingReader _arithReader;
 
         public ArithmeticSectionsCodec(ulong[] probabilities, ulong estSections)
@@ -193,7 +193,7 @@ namespace i4c
         public ArithmeticSectionsCodec(ulong[] probabilities, ulong estSections, Stream sourceStream)
             : this(probabilities, estSections)
         {
-            _arithWriter = new ArithmeticCodingWriter(sourceStream, _probs);
+            _arithWriter = new ArithmeticWriter(sourceStream, _probs);
         }
 
         public byte[] Encode()
@@ -201,7 +201,7 @@ namespace i4c
             if (_arithReader != null)
                 throw new InvalidOperationException("Cannot mix reads and writes in ArithmeticSectionsCodec");
 
-            _arithWriter.Close(false);
+            _arithWriter.Flush();
             return _memStream == null ? null : _memStream.ToArray();
         }
 
@@ -227,7 +227,7 @@ namespace i4c
             if (_arithWriter == null)
             {
                 _memStream = new MemoryStream();
-                _arithWriter = new ArithmeticCodingWriter(_memStream, _probs);
+                _arithWriter = new ArithmeticWriter(_memStream, _probs);
             }
 
             foreach (var sym in data)

@@ -183,12 +183,12 @@ namespace i4c
             MemoryStream master = new MemoryStream();
 
             MemoryStream ms = new MemoryStream();
-            var acw = new ArithmeticCodingWriter(ms, probsProbs);
+            var aw = new ArithmeticWriter(ms, probsProbs);
             for (int i = 0; i < count; i++)
             {
-                acw.WriteSymbol(freqs[i] >= 31 ? 31 : (int)freqs[i]);
+                aw.WriteSymbol(freqs[i] >= 31 ? 31 : (int)freqs[i]);
             }
-            acw.Close(false);
+            aw.Flush();
             var arr = ms.ToArray();
             master.WriteUInt32Optim((uint)arr.Length);
             master.Write(arr, 0, arr.Length);
