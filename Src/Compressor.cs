@@ -690,7 +690,8 @@ namespace i4c
             image.ArgbTo4c();
             IntField orig = image.Clone();
             //image.PredictionEnTransformXor(new HorzVertForeseer());
-            IntField backgr = CodecUtil.BackgroundFilterThin(image, 2, 2);
+            //IntField backgr = CodecUtil.BackgroundFilterThin(image, 2, 2);
+            IntField backgr = CodecUtil.BackgroundFilterSmall(image, 50);
             AddImageGrayscale(image, "orig");
             AddImageGrayscale(backgr, "backgr");
 

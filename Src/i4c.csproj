@@ -60,6 +60,7 @@
     <Compile Include="CodecUtil.cs" />
     <Compile Include="Compressor.cs" />
     <Compile Include="Foreseer.cs" />
+    <Compile Include="I4cEcho.cs" />
     <Compile Include="IntField.cs" />
     <Compile Include="LzwCodec.cs" />
     <Compile Include="MainForm.cs">

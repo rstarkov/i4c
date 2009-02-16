@@ -1,35 +1,17 @@
-do try lzw on regions where whitespace is excluded. Try limiting the length of words created. Try visualising to ensure it works
-find black regions instead of white - these can overlap. Pick them in the order where next rect adds the most new black coverage
-for white regions: don't encode height, encode end of stream instead?
-encode runs as optim + arith?
+----do try lzw on regions where whitespace is excluded. Try limiting the length of words created. Try visualising to ensure it works
+----find black regions instead of white - these can overlap. Pick them in the order where next rect adds the most new black coverage
+----for white regions: don't encode height, encode end of stream instead?
 
-encode pixel positions relative to the previous pixel, both vertically and horizontally.
-
-
-skip pixels already encoded in one field?
+* skip pixels already encoded in one field?
 
 * arithmetic codec which adjusts probabilities on the go:
   - start with all probabilities at 1 up to max symbol
   - every time after encoding a symbol increment its probability
 
-- with xordiff encoding: encode blocks, eg 4x4
+* with xordiff encoding: encode blocks, eg 4x4
 
 * bring-to-front filter:
   - initially map all symbols to themselves
   - every time a symbol S occurs, record it as S but also remap it onto a symbol between 0 and S, eg S / 2.
 
-* burrows-wheeler
-
-
-
-
-Future improvements:
-* pre-pass to remove backgrounds and horz/vert boundaries?
-* multi-color predictor
 * auto-align on letter boundaries (requires flexible size foreseer)
-* adaptive arithmetic
-
-* super-slow-and-advanced predictor: order colors by frequency but keep all colors
-
-Speedups:
-* Accessor class for images, incrementing it advances to next element in a pre-defined direction

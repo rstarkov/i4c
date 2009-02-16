@@ -99,7 +99,7 @@ namespace i4c
 
         public static void TestData(int[] data, int symMax, int symDataMax, int rlStages, params int[] symRle)
         {
-            int[] trip;
+            //int[] trip;
 
             //RunLengthCodec enc = new RunLengthCodec(symMax, symDataMax, rlStages, symRle);
             //RunLengthCodec dec = new RunLengthCodec(symMax, symDataMax, rlStages, symRle);
