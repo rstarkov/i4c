@@ -31,7 +31,7 @@ namespace i4c
         {
             for (int i = 0; i < args.Length && i < Config.Length; i++)
                 Config[i] = args[i];
-            ConfigString = Config.Select(val => (string)val).Join(",");
+            ConfigString = Config.Select(val => (string)val).JoinString(",");
         }
 
         public abstract void Encode(IntField image, Stream output);

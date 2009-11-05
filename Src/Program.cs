@@ -68,7 +68,7 @@ namespace i4c
                     DlgMessage.ShowError("Must also specify the name of the algorithm to benchmark");
                     return;
                 }
-                command_Benchmark(args[1], args.Skip(2).Select(val => (RVariant)val).ToArray());
+                command_Benchmark(args[1], args.Skip(2).Select(val => (RVariant) val).ToArray());
             }
             else
             {
@@ -77,7 +77,7 @@ namespace i4c
                     DlgMessage.ShowError("Must specify at least the algorithm name and the file name");
                     return;
                 }
-                command_Single(args[1], args[0], args.Skip(2).Select(val => (RVariant)val).ToArray());
+                command_Single(args[1], args[0], args.Skip(2).Select(val => (RVariant) val).ToArray());
             }
         }
 
@@ -89,7 +89,7 @@ namespace i4c
         {
             if (Compressors.ContainsKey(name))
             {
-                Compressor compr = (Compressor)Compressors[name].GetConstructor(new Type[] { }).Invoke(new object[] { });
+                Compressor compr = (Compressor) Compressors[name].GetConstructor(new Type[] { }).Invoke(new object[] { });
                 compr.Name = name;
                 return compr;
             }
@@ -165,14 +165,13 @@ namespace i4c
                 }
             }
 
-            // Write stats totals to a file a text file
-            TextTable table = new TextTable(true, TextTable.Alignment.Right);
-            table.SetAlignment(0, TextTable.Alignment.Left);
-            table[0, 1] = "TOTAL";
+            // Write stats totals to a text file
+            TextTable2 table = new TextTable2 { ColumnSpacing = 3, MaxWidth = int.MaxValue, DefaultAlignment = TextTable2.Alignment.Right };
+            table.SetCell(1, 0, "TOTAL");
             int colnum = 2;
             int rownum = 2;
             foreach (var str in compressors.Values.Select(val => val.CanonicalFileName).Order())
-                table[0, colnum++] = str;
+                table.SetCell(colnum++, 0, str);
             int indent_prev = 0;
             foreach (var key in totals.Keys.Order())
             {
@@ -180,17 +179,17 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table[rownum, 0] = " ".Repeat(indent) + key.Split('|').Last();
-                table[rownum, 1] = Math.Round(totals[key], 3).ToString("#,0");
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), TextTable2.Alignment.Left);
+                table.SetCell(1, rownum, Math.Round(totals[key], 3).ToString("#,0"));
                 colnum = 2;
                 foreach (var compr in compressors.Values.OrderBy(c => c.CanonicalFileName))
                     if (compr.Counters.ContainsKey(key))
-                        table[rownum, colnum++] = Math.Round(compr.Counters[key], 3).ToString("#,0");
+                        table.SetCell(colnum++, rownum, Math.Round(compr.Counters[key], 3).ToString("#,0"));
                     else
-                        table[rownum, colnum++] = "N/A";
+                        table.SetCell(colnum++, rownum, "N/A");
                 rownum++;
             }
-            File.WriteAllText(PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().ConfigString)), table.GetText(0, 99999, 3, false));
+            File.WriteAllText(PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().ConfigString)), table.ToString());
 
             WaitFormHide();
         }
@@ -282,8 +281,7 @@ namespace i4c
 
         private static void SaveComprCounters(Compressor compr, string destDir)
         {
-            TextTable table = new TextTable(true, TextTable.Alignment.Right);
-            table.SetAlignment(0, TextTable.Alignment.Left);
+            TextTable2 table = new TextTable2 { DefaultAlignment = TextTable2.Alignment.Right, ColumnSpacing = 3, MaxWidth = int.MaxValue };
             compr.ComputeCounterTotals();
 
             int rownum = 0;
@@ -294,12 +292,12 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table[rownum, 0] = " ".Repeat(indent) + key.Split('|').Last();
-                table[rownum, 1] = Math.Round(compr.Counters[key], 3).ToString("#,0");
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), TextTable2.Alignment.Left);
+                table.SetCell(1, rownum, Math.Round(compr.Counters[key], 3).ToString("#,0"));
                 rownum++;
             }
 
-            File.WriteAllText(PathUtil.Combine(destDir, "counters.txt"), table.GetText(0, 99999, 3, false));
+            File.WriteAllText(PathUtil.Combine(destDir, "counters.txt"), table.ToString());
         }
 
         #region WaitForm

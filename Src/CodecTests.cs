@@ -61,32 +61,32 @@ namespace i4c
         {
             for (int iter = 0; iter < 10000; iter++)
             {
-                int symDataMax = Ut.RndInt(1, 50);
-                int rlStages = Ut.RndInt(1, 4);
-                int symRles = Ut.RndInt(1, Math.Min(symDataMax, 3));
-                int symMax = Ut.RndInt(symDataMax + rlStages*symRles, symDataMax + rlStages*symRles + 10);
+                int symDataMax = Rnd.Next(1, 50);
+                int rlStages = Rnd.Next(1, 4);
+                int symRles = Rnd.Next(1, Math.Min(symDataMax, 3));
+                int symMax = Rnd.Next(symDataMax + rlStages * symRles, symDataMax + rlStages * symRles + 10);
                 int[] symRle = new int[symRles];
                 for (int i = 0; i < symRles; i++)
                     symRle[i] = i;
 
                 int dataLen;
-                if (Ut.RndDouble() < 0.5)
-                    dataLen = Ut.RndInt(0, 10);
+                if (Rnd.NextDouble() < 0.5)
+                    dataLen = Rnd.Next(0, 10);
                 else
-                    dataLen = Ut.RndInt(0, 5000);
+                    dataLen = Rnd.Next(0, 5000);
 
                 List<int> data = new List<int>();
                 while (dataLen > 0)
                 {
-                    if (Ut.RndDouble() > 0.03)
+                    if (Rnd.NextDouble() > 0.03)
                     {
-                        data.Add(Ut.RndInt(0, symDataMax+1));
+                        data.Add(Rnd.Next(0, symDataMax + 1));
                         dataLen--;
                     }
                     else
                     {
-                        int runLen = Ut.RndInt(1, dataLen);
-                        int runSym = symRle[Ut.RndInt(0, symRle.Length)];
+                        int runLen = Rnd.Next(1, dataLen);
+                        int runSym = symRle[Rnd.Next(0, symRle.Length)];
                         for (int i = 0; i < runLen; i++)
                             data.Add(runSym);
                         dataLen -= runLen;
@@ -131,7 +131,7 @@ namespace i4c
             }
 
             {
-                ulong[] input = data.Select(val => (ulong)val).ToArray();
+                ulong[] input = data.Select(val => (ulong) val).ToArray();
                 MemoryStream ms = new MemoryStream();
                 CodecUtil.SaveFreqs(ms, input, TimwiCec.runLProbsProbs, "");
                 ms.Position = 0;
