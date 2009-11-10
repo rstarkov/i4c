@@ -7,10 +7,11 @@ using RT.Util.Controls;
 using RT.Util.Dialogs;
 using System.Threading;
 using RT.Util.Collections;
+using RT.KitchenSink.Collections;
 
 namespace i4c
 {
-    public partial class MainForm: Form
+    public partial class MainForm : Form
     {
         public static MainForm TheInstance;
         public static Queue<Tuple<string, IntField>> Images = new Queue<Tuple<string, IntField>>();
@@ -32,13 +33,13 @@ namespace i4c
 
         private void Compressor_Click(object sender, EventArgs e)
         {
-            ToolStripMenuItem mi = (ToolStripMenuItem)sender;
+            ToolStripMenuItem mi = (ToolStripMenuItem) sender;
             Compressor compr = Program.GetCompressor(mi.Text.Replace("&", ""));
             var input = InputBox.GetLine("Please enter the arguments for this compressor:", "");
             if (input == null)
                 return;
             var args = input.Split(' ');
-            compr.Configure(args.Skip(1).Select(val => (RVariant)val).ToArray());
+            compr.Configure(args.Skip(1).Select(val => (RVariant) val).ToArray());
             ThreadPool.QueueUserWorkItem(dummy => Program.CompressDecompressSingle(compr, args[0]));
         }
 
@@ -55,11 +56,11 @@ namespace i4c
 
         void panel_PaintBuffer(object sender, PaintEventArgs e)
         {
-            DoubleBufferedPanel panel = (DoubleBufferedPanel)sender;
-            Bitmap image = (Bitmap)panel.Tag;
+            DoubleBufferedPanel panel = (DoubleBufferedPanel) sender;
+            Bitmap image = (Bitmap) panel.Tag;
             e.Graphics.Clear(Color.DarkBlue);
-            int x = panel.Width/2 - image.Width/2;
-            int y = panel.Height/2 - image.Height/2;
+            int x = panel.Width / 2 - image.Width / 2;
+            int y = panel.Height / 2 - image.Height / 2;
             e.Graphics.DrawImageUnscaled(image, x < 0 ? 0 : x, y < 0 ? 0 : y);
         }
 
@@ -87,7 +88,7 @@ namespace i4c
                     var data = Images.Dequeue();
 
                     TabPage page = new TabPage();
-                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.E1==null ? "" : (": " + data.E1));
+                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.E1 == null ? "" : (": " + data.E1));
                     TheInstance.tabsMain.TabPages.Add(page);
                     TheInstance.tabsMain.Visible = true;
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{EBFA4644-13E6-4082-B446-5C0DDF6101DD}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -96,6 +96,10 @@
     <Compile Include="TimwiCec.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\RT.Util\Src\RT.KitchenSink.csproj">
+      <Project>{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}</Project>
+      <Name>KitchenSink</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
       <Name>Util</Name>

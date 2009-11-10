@@ -9,6 +9,7 @@ using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
 using RT.Util.Text;
 using RT.Util.Collections;
+using RT.KitchenSink.Collections;
 
 namespace i4c
 {
