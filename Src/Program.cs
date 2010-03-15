@@ -138,7 +138,7 @@ namespace i4c
                 compr.Configure(algArgs);
                 compr.CanonicalFileName = Path.GetFileNameWithoutExtension(file);
                 string sourcePath = file;
-                string destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}".Fmt(algName, compr.ConfigString), compr.CanonicalFileName);
+                string destDir = PathUtil.AppPathCombine("i4c-output", "benchmark.{0},{1}".Fmt(algName, compr.ConfigString), compr.CanonicalFileName);
                 string destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, algName, compr.ConfigString);
 
                 Func<Compressor, string, string, string, WaitCallback> makeCallback =
@@ -191,7 +191,7 @@ namespace i4c
                         table.SetCell(colnum++, rownum, "N/A");
                 rownum++;
             }
-            File.WriteAllText(PathUtil.Combine(PathUtil.AppPath, "i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().ConfigString)), table.ToString());
+            File.WriteAllText(PathUtil.AppPathCombine("i4c-output", "benchmark.{0},{1}.txt".Fmt(algName, compressors.Values.First().ConfigString)), table.ToString());
 
             WaitFormHide();
         }
@@ -209,17 +209,17 @@ namespace i4c
             {
                 if (basename.Contains("."))
                     compr.CanonicalFileName = basename.Substring(0, basename.LastIndexOf("."));
-                var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "decode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
+                var destDir = PathUtil.AppPathCombine("i4c-output", "decode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.png".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 DecompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile), true);
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
             }
             else
             {
-                var destDir = PathUtil.Combine(PathUtil.AppPath, "i4c-output", "encode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
+                var destDir = PathUtil.AppPathCombine("i4c-output", "encode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 CompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.Combine(PathUtil.AppPath, destFile), true);
+                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
             }
         }
 
