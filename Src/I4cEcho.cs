@@ -64,10 +64,10 @@ namespace i4c
         private void saveColors(IntField foregr)
         {
             var clr = foregr.Data.Where(pix => pix > 0).ToArray();
-            Tuple<int, int>[] cc = new Tuple<int, int>[3];
-            cc[0] = new Tuple<int, int>(clr.Where(pix => pix == 1).Count(), 1);
-            cc[1] = new Tuple<int, int>(clr.Where(pix => pix == 2).Count(), 2);
-            cc[2] = new Tuple<int, int>(clr.Where(pix => pix == 3).Count(), 3);
+            RT.Util.ObsoleteTuple.Tuple<int, int>[] cc = new RT.Util.ObsoleteTuple.Tuple<int, int>[3];
+            cc[0] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 1).Count(), 1);
+            cc[1] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 2).Count(), 2);
+            cc[2] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 3).Count(), 3);
             cc = cc.OrderBy(tup => -tup.E1).ToArray();
             int c1 = cc[0].E2;
             int c2 = cc[1].E2;

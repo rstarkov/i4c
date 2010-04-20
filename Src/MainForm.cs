@@ -14,7 +14,7 @@ namespace i4c
     public partial class MainForm : Form
     {
         public static MainForm TheInstance;
-        public static Queue<Tuple<string, IntField>> Images = new Queue<Tuple<string, IntField>>();
+        public static Queue<RT.Util.ObsoleteTuple.Tuple<string, IntField>> Images = new Queue<RT.Util.ObsoleteTuple.Tuple<string, IntField>>();
 
         public class Settings
         {
@@ -50,7 +50,7 @@ namespace i4c
 
             lock (Images)
             {
-                Images.Enqueue(new Tuple<string, IntField>(caption, argb));
+                Images.Enqueue(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, argb));
             }
         }
 

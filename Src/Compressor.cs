@@ -25,7 +25,7 @@ namespace i4c
         private Dictionary<string, double> _counters = new Dictionary<string, double>();
         public Dictionary<string, double> Counters;
 
-        public List<Tuple<string, IntField>> Images = new List<Tuple<string, IntField>>();
+        public List<RT.Util.ObsoleteTuple.Tuple<string, IntField>> Images = new List<RT.Util.ObsoleteTuple.Tuple<string, IntField>>();
         public Dictionary<string, RVariant[]> Dumps = new Dictionary<string, RVariant[]>();
 
         public virtual void Configure(params RVariant[] args)
@@ -47,12 +47,12 @@ namespace i4c
         {
             IntField temp = image.Clone();
             temp.ArgbFromField(min, max);
-            Images.Add(new Tuple<string, IntField>(caption, temp));
+            Images.Add(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, temp));
         }
 
         public void AddImageArgb(IntField image, string caption)
         {
-            Images.Add(new Tuple<string, IntField>(caption, image.Clone()));
+            Images.Add(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, image.Clone()));
         }
 
         public void AddIntDump(string name, IEnumerable<int> list)
