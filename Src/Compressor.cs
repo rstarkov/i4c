@@ -25,7 +25,7 @@ namespace i4c
         private Dictionary<string, double> _counters = new Dictionary<string, double>();
         public Dictionary<string, double> Counters;
 
-        public List<RT.Util.ObsoleteTuple.Tuple<string, IntField>> Images = new List<RT.Util.ObsoleteTuple.Tuple<string, IntField>>();
+        public List<Tuple<string, IntField>> Images = new List<Tuple<string, IntField>>();
         public Dictionary<string, RVariant[]> Dumps = new Dictionary<string, RVariant[]>();
 
         public virtual void Configure(params RVariant[] args)
@@ -47,12 +47,12 @@ namespace i4c
         {
             IntField temp = image.Clone();
             temp.ArgbFromField(min, max);
-            Images.Add(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, temp));
+            Images.Add(new Tuple<string, IntField>(caption, temp));
         }
 
         public void AddImageArgb(IntField image, string caption)
         {
-            Images.Add(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, image.Clone()));
+            Images.Add(new Tuple<string, IntField>(caption, image.Clone()));
         }
 
         public void AddIntDump(string name, IEnumerable<int> list)
@@ -152,8 +152,8 @@ namespace i4c
         public override IntField Decode(Stream input)
         {
             // Read size
-            int w = input.ReadUInt32Optim();
-            int h = input.ReadUInt32Optim();
+            int w = (int) input.ReadUInt32Optim();
+            int h = (int) input.ReadUInt32Optim();
             // Read probabilities
             ulong[] probs = CodecUtil.LoadFreqsCrappy(input, FieldcodeSymbols + 1);
             // Read fields
@@ -209,8 +209,8 @@ namespace i4c
         public override IntField Decode(Stream input)
         {
             // Read size
-            int w = input.ReadUInt32Optim();
-            int h = input.ReadUInt32Optim();
+            int w = (int) input.ReadUInt32Optim();
+            int h = (int) input.ReadUInt32Optim();
             // Read probabilities
             ulong[] probs = CodecUtil.LoadFreqsCrappy(input, FieldcodeSymbols + 1);
             // Read fields
@@ -280,12 +280,12 @@ namespace i4c
         public override IntField Decode(Stream input)
         {
             // Read size
-            int w = input.ReadUInt32Optim();
-            int h = input.ReadUInt32Optim();
+            int w = (int) input.ReadUInt32Optim();
+            int h = (int) input.ReadUInt32Optim();
             // Read probabilities
             ulong[] probs = CodecUtil.LoadFreqs(input, TimwiCec.runLProbsProbs, RLE.MaxSymbol+1);
             // Read fields
-            int len = input.ReadUInt32Optim();
+            int len = (int) input.ReadUInt32Optim();
             ArithmeticCodingReader acr = new ArithmeticCodingReader(input, probs);
             int[] fields = new int[len];
             for (int p = 0; p < len; p++)
@@ -671,10 +671,10 @@ namespace i4c
                 temp.Map(x => x == i ? 1 : 0);
                 AddImageGrayscale(temp, 0, 1, "field" + i);
                 var runs = new RunLength01SplitCodec().EncodeSplit(temp.Data);
-                SetCounter("runs|field{0}|0s".Fmt(i), runs.E1.Count);
-                SetCounter("runs|field{0}|1s".Fmt(i), runs.E2.Count);
-                AddIntDump("field{0}-0s".Fmt(i), runs.E1);
-                AddIntDump("field{0}-1s".Fmt(i), runs.E2);
+                SetCounter("runs|field{0}|0s".Fmt(i), runs.Item1.Count);
+                SetCounter("runs|field{0}|1s".Fmt(i), runs.Item2.Count);
+                AddIntDump("field{0}-0s".Fmt(i), runs.Item1);
+                AddIntDump("field{0}-1s".Fmt(i), runs.Item2);
             }
         }
 

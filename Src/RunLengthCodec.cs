@@ -2,6 +2,7 @@
 using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
+using System;
 
 namespace i4c
 {
@@ -13,7 +14,7 @@ namespace i4c
         private int[] _symRle;
 
         private int[][] _symSpec;
-        private Dictionary<int, RT.Util.ObsoleteTuple.Tuple<int, int>> _symSpecInv;
+        private Dictionary<int, Tuple<int, int>> _symSpecInv;
         private int[] _maxRunLength;
         private int _maxRunLengthPossible;
 
@@ -27,14 +28,14 @@ namespace i4c
             // Allocate special symbols
             int freeSym = _symDataMax + 1;
             _symSpec = new int[_rlStages][];
-            _symSpecInv = new Dictionary<int, RT.Util.ObsoleteTuple.Tuple<int, int>>();
+            _symSpecInv = new Dictionary<int, Tuple<int, int>>();
             for (int stage = 0; stage < _rlStages; stage++)
             {
                 _symSpec[stage] = new int[_symRle.Length];
                 for (int symbol = 0; symbol < _symRle.Length; symbol++)
                 {
                     _symSpec[stage][symbol] = freeSym;
-                    _symSpecInv.Add(freeSym, new RT.Util.ObsoleteTuple.Tuple<int, int>(stage, symbol));
+                    _symSpecInv.Add(freeSym, new Tuple<int, int>(stage, symbol));
                     freeSym++;
                 }
             }
@@ -140,8 +141,8 @@ namespace i4c
                 }
                 else
                 {
-                    int stage = _symSpecInv[data[pos]].E1;
-                    int symbol = _symSpecInv[data[pos]].E2;
+                    int stage = _symSpecInv[data[pos]].Item1;
+                    int symbol = _symSpecInv[data[pos]].Item2;
                     // Decode the number of repetitions
                     int count = 0;
                     int mul = 1;

@@ -181,7 +181,7 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), TextTable.Alignment.Left);
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: TextTable.Alignment.Left);
                 table.SetCell(1, rownum, Math.Round(totals[key], 3).ToString("#,0"));
                 colnum = 2;
                 foreach (var compr in compressors.Values.OrderBy(c => c.CanonicalFileName))
@@ -212,14 +212,14 @@ namespace i4c
                 var destDir = PathUtil.AppPathCombine("i4c-output", "decode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.png".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 DecompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
+                File.Copy(Path.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
             }
             else
             {
                 var destDir = PathUtil.AppPathCombine("i4c-output", "encode.{0}.{1},{2}".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString));
                 var destFile = "{0}.{1},{2}.i4c".Fmt(compr.CanonicalFileName, compr.Name, compr.ConfigString);
                 CompressFile(compr, filename, destDir, destFile);
-                File.Copy(PathUtil.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
+                File.Copy(Path.Combine(destDir, destFile), PathUtil.AppPathCombine(destFile), true);
             }
         }
 
@@ -233,7 +233,7 @@ namespace i4c
             image.ArgbLoadFromFile(sourcePath);
 
             Directory.CreateDirectory(destDir);
-            FileStream output = File.Open(PathUtil.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read);
+            FileStream output = File.Open(Path.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read);
             compr.Encode(image, output);
             output.Close();
 
@@ -253,7 +253,7 @@ namespace i4c
             input.Close();
 
             Directory.CreateDirectory(destDir);
-            f.ArgbToBitmap().Save(PathUtil.Combine(destDir, destFile), ImageFormat.Png);
+            f.ArgbToBitmap().Save(Path.Combine(destDir, destFile), ImageFormat.Png);
             SaveComprImages(compr, destDir);
             SaveComprDumps(compr, destDir);
             SaveComprCounters(compr, destDir);
@@ -263,8 +263,8 @@ namespace i4c
         {
             foreach (var imgtuple in compr.Images)
             {
-                imgtuple.E2.ArgbToBitmap().Save(PathUtil.Combine(destDir, "image-{0}.png".Fmt(imgtuple.E1)), ImageFormat.Png);
-                MainForm.AddImageTab(imgtuple.E2, imgtuple.E1);
+                imgtuple.Item2.ArgbToBitmap().Save(Path.Combine(destDir, "image-{0}.png".Fmt(imgtuple.Item1)), ImageFormat.Png);
+                MainForm.AddImageTab(imgtuple.Item2, imgtuple.Item1);
             }
 
         }
@@ -277,7 +277,7 @@ namespace i4c
                 var dumpdata = compr.Dumps[dumpname];
                 for (int i = 0; i < dumpdata.Length; i++)
                     table[i, 0] = dumpdata[i];
-                table.SaveToFile(PathUtil.Combine(destDir, "dump-{0}.csv".Fmt(dumpname)));
+                table.SaveToFile(Path.Combine(destDir, "dump-{0}.csv".Fmt(dumpname)));
             }
         }
 
@@ -294,12 +294,12 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), TextTable.Alignment.Left);
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: TextTable.Alignment.Left);
                 table.SetCell(1, rownum, Math.Round(compr.Counters[key], 3).ToString("#,0"));
                 rownum++;
             }
 
-            File.WriteAllText(PathUtil.Combine(destDir, "counters.txt"), table.ToString());
+            File.WriteAllText(Path.Combine(destDir, "counters.txt"), table.ToString());
         }
 
         #region WaitForm

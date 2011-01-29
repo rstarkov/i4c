@@ -210,7 +210,7 @@ namespace i4c
         {
             var len = readFrom.ReadUInt32Optim();
             byte[] arr = new byte[len];
-            readFrom.Read(arr, 0, len);
+            readFrom.Read(arr, 0, (int) len);
             var acr = new ArithmeticCodingReader(new MemoryStream(arr), probsProbs);
             var freqs = new ulong[numFreqs];
             for (int i = 0; i < numFreqs; i++)

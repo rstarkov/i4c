@@ -383,7 +383,7 @@ namespace i4c
             throw new Exception("Call the other Decode method for this class.");
         }
 
-        public RT.Util.ObsoleteTuple.Tuple<List<int>, List<int>> EncodeSplit(int[] data)
+        public Tuple<List<int>, List<int>> EncodeSplit(int[] data)
         {
             List<int> runs0 = new List<int>();
             List<int> runs1 = new List<int>();
@@ -426,7 +426,7 @@ namespace i4c
                 runs1.Add(pos - runStart);
             }
 
-            return new RT.Util.ObsoleteTuple.Tuple<List<int>, List<int>>(runs0, runs1);
+            return new Tuple<List<int>, List<int>>(runs0, runs1);
         }
 
     }

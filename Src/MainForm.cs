@@ -14,7 +14,7 @@ namespace i4c
     public partial class MainForm : Form
     {
         public static MainForm TheInstance;
-        public static Queue<RT.Util.ObsoleteTuple.Tuple<string, IntField>> Images = new Queue<RT.Util.ObsoleteTuple.Tuple<string, IntField>>();
+        public static Queue<Tuple<string, IntField>> Images = new Queue<Tuple<string, IntField>>();
 
         public class Settings
         {
@@ -50,7 +50,7 @@ namespace i4c
 
             lock (Images)
             {
-                Images.Enqueue(new RT.Util.ObsoleteTuple.Tuple<string, IntField>(caption, argb));
+                Images.Enqueue(new Tuple<string, IntField>(caption, argb));
             }
         }
 
@@ -88,13 +88,13 @@ namespace i4c
                     var data = Images.Dequeue();
 
                     TabPage page = new TabPage();
-                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.E1 == null ? "" : (": " + data.E1));
+                    page.Text = (TheInstance.tabsMain.TabCount + 1) + (data.Item1 == null ? "" : (": " + data.Item1));
                     TheInstance.tabsMain.TabPages.Add(page);
                     TheInstance.tabsMain.Visible = true;
 
                     DoubleBufferedPanel panel = new DoubleBufferedPanel();
                     panel.Dock = DockStyle.Fill;
-                    panel.Tag = data.E2.ArgbToBitmap();
+                    panel.Tag = data.Item2.ArgbToBitmap();
                     panel.PaintBuffer += new PaintEventHandler(TheInstance.panel_PaintBuffer);
                     page.Controls.Add(panel);
 

@@ -64,14 +64,14 @@ namespace i4c
         private void saveColors(IntField foregr)
         {
             var clr = foregr.Data.Where(pix => pix > 0).ToArray();
-            RT.Util.ObsoleteTuple.Tuple<int, int>[] cc = new RT.Util.ObsoleteTuple.Tuple<int, int>[3];
-            cc[0] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 1).Count(), 1);
-            cc[1] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 2).Count(), 2);
-            cc[2] = new RT.Util.ObsoleteTuple.Tuple<int, int>(clr.Where(pix => pix == 3).Count(), 3);
-            cc = cc.OrderBy(tup => -tup.E1).ToArray();
-            int c1 = cc[0].E2;
-            int c2 = cc[1].E2;
-            int c3 = cc[2].E2;
+            Tuple<int, int>[] cc = new Tuple<int, int>[3];
+            cc[0] = new Tuple<int, int>(clr.Where(pix => pix == 1).Count(), 1);
+            cc[1] = new Tuple<int, int>(clr.Where(pix => pix == 2).Count(), 2);
+            cc[2] = new Tuple<int, int>(clr.Where(pix => pix == 3).Count(), 3);
+            cc = cc.OrderBy(tup => -tup.Item1).ToArray();
+            int c1 = cc[0].Item2;
+            int c2 = cc[1].Item2;
+            int c3 = cc[2].Item2;
             IntField cover = foregr.Clone();
             cover.Map(pix => pix == c1 ? 1 : pix == c2 ? 5 : 0);
             AddImageGrayscale(cover, 0, 5, "25-cover-2s");
