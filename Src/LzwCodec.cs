@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace i4c
 {
-    public class IntString: IComparable<IntString>
+    public class IntString : IComparable<IntString>
     {
         public int[] Arr;
 
@@ -19,12 +17,12 @@ namespace i4c
             Arr = new int[] { sym };
         }
 
-        public static IntString operator+(IntString one, int other)
+        public static IntString operator +(IntString one, int other)
         {
             var res = new IntString();
             res.Arr = new int[one.Arr.Length + 1];
             Array.Copy(one.Arr, res.Arr, one.Arr.Length);
-            res.Arr[res.Arr.Length-1] = other;
+            res.Arr[res.Arr.Length - 1] = other;
             return res;
         }
 
@@ -53,7 +51,7 @@ namespace i4c
 
         public override bool Equals(object obj)
         {
-            return CompareTo((IntString)obj) == 0;
+            return CompareTo((IntString) obj) == 0;
         }
 
         public override int GetHashCode()
@@ -109,8 +107,8 @@ namespace i4c
                         result.Add(dict[word]);
                     //if (wordsym.Arr.All(val => val < 16))
                     //{
-                        dict.Add(wordsym, nextSym);
-                        nextSym++;
+                    dict.Add(wordsym, nextSym);
+                    nextSym++;
                     //}
                     word = new IntString(sym);
                 }

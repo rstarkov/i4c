@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using RT.Util;
+using RT.KitchenSink.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
-using RT.Util.Text;
-using RT.Util.Collections;
-using RT.KitchenSink.Collections;
 
 namespace i4c
 {
@@ -32,7 +28,7 @@ namespace i4c
         {
             for (int i = 0; i < args.Length && i < Config.Length; i++)
                 Config[i] = args[i];
-            ConfigString = Config.Select(val => (string)val).JoinString(",");
+            ConfigString = Config.Select(val => (string) val).JoinString(",");
         }
 
         public abstract void Encode(IntField image, Stream output);
@@ -57,7 +53,7 @@ namespace i4c
 
         public void AddIntDump(string name, IEnumerable<int> list)
         {
-            Dumps.Add(name, list.Select(val => (RVariant)val).ToArray());
+            Dumps.Add(name, list.Select(val => (RVariant) val).ToArray());
         }
 
         public void SetCounter(string name, double value)
@@ -100,7 +96,7 @@ namespace i4c
         }
     }
 
-    public abstract class CompressorFixedSizeFieldcode: Compressor
+    public abstract class CompressorFixedSizeFieldcode : Compressor
     {
         public FixedSizeForeseer Seer;
         protected int FieldcodeSymbols;
@@ -113,12 +109,12 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            FieldcodeSymbols = (int)Config[3];
-            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
+            FieldcodeSymbols = (int) Config[3];
+            Seer = new FixedSizeForeseer((int) Config[0], (int) Config[1], (int) Config[2], new HorzVertForeseer());
         }
     }
 
-    public class I4cAlpha: CompressorFixedSizeFieldcode
+    public class I4cAlpha : CompressorFixedSizeFieldcode
     {
         public override void Encode(IntField image, Stream output)
         {
@@ -130,8 +126,8 @@ namespace i4c
 
             // Write size
             DeltaTracker pos = new DeltaTracker();
-            output.WriteUInt32Optim((uint)image.Width);
-            output.WriteUInt32Optim((uint)image.Height);
+            output.WriteUInt32Optim((uint) image.Width);
+            output.WriteUInt32Optim((uint) image.Height);
             SetCounter("bytes|size", pos.Next(output.Position));
             // Write probs
             ulong[] probs = CodecUtil.GetFreqsForAllSections(fields, FieldcodeSymbols + 1);
@@ -143,7 +139,7 @@ namespace i4c
             for (int i = 0; i < fields.Count; i++)
             {
                 ac.WriteSection(fields[i]);
-                SetCounter("bytes|fields|"+(i+1), pos.Next(output.Position));
+                SetCounter("bytes|fields|" + (i + 1), pos.Next(output.Position));
             }
             ac.Encode();
             SetCounter("bytes|arith-err", pos.Next(output.Position));
@@ -172,7 +168,7 @@ namespace i4c
         }
     }
 
-    public class I4cBravo: CompressorFixedSizeFieldcode
+    public class I4cBravo : CompressorFixedSizeFieldcode
     {
         public override void Encode(IntField image, Stream output)
         {
@@ -185,8 +181,8 @@ namespace i4c
 
             // Write size
             DeltaTracker pos = new DeltaTracker();
-            output.WriteUInt32Optim((uint)image.Width);
-            output.WriteUInt32Optim((uint)image.Height);
+            output.WriteUInt32Optim((uint) image.Width);
+            output.WriteUInt32Optim((uint) image.Height);
             SetCounter("bytes|size", pos.Next(output.Position));
 
             // Write probs
@@ -200,7 +196,7 @@ namespace i4c
             for (int i = 0; i < fields.Count; i++)
             {
                 ac.WriteSection(fields[i]);
-                SetCounter("bytes|fields|"+(i+1), pos.Next(output.Position));
+                SetCounter("bytes|fields|" + (i + 1), pos.Next(output.Position));
             }
             ac.Encode();
             SetCounter("bytes|arith-err", pos.Next(output.Position));
@@ -229,7 +225,7 @@ namespace i4c
         }
     }
 
-    public class I4cDelta: Compressor
+    public class I4cDelta : Compressor
     {
         protected Foreseer Seer;
         protected SymbolCodec RLE;
@@ -242,8 +238,8 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
-            RLE = new RunLength01LongShortCodec((int)Config[3], (int)Config[4]);
+            Seer = new FixedSizeForeseer((int) Config[0], (int) Config[1], (int) Config[2], new HorzVertForeseer());
+            RLE = new RunLength01LongShortCodec((int) Config[3], (int) Config[4]);
         }
 
         public override void Encode(IntField image, Stream output)
@@ -259,8 +255,8 @@ namespace i4c
 
             // Write size
             DeltaTracker pos = new DeltaTracker();
-            output.WriteUInt32Optim((uint)image.Width);
-            output.WriteUInt32Optim((uint)image.Height);
+            output.WriteUInt32Optim((uint) image.Width);
+            output.WriteUInt32Optim((uint) image.Height);
             SetCounter("bytes|size", pos.Next(output.Position));
 
             // Write probs
@@ -270,7 +266,7 @@ namespace i4c
 
             // Write fields
             ArithmeticWriter aw = new ArithmeticWriter(output, probs);
-            output.WriteUInt32Optim((uint)fields.Length);
+            output.WriteUInt32Optim((uint) fields.Length);
             foreach (var sym in fields)
                 aw.WriteSymbol(sym);
             aw.Flush();
@@ -283,7 +279,7 @@ namespace i4c
             int w = (int) input.ReadUInt32Optim();
             int h = (int) input.ReadUInt32Optim();
             // Read probabilities
-            ulong[] probs = CodecUtil.LoadFreqs(input, TimwiCec.runLProbsProbs, RLE.MaxSymbol+1);
+            ulong[] probs = CodecUtil.LoadFreqs(input, TimwiCec.runLProbsProbs, RLE.MaxSymbol + 1);
             // Read fields
             int len = (int) input.ReadUInt32Optim();
             ArithmeticCodingReader acr = new ArithmeticCodingReader(input, probs);
@@ -300,7 +296,7 @@ namespace i4c
         }
     }
 
-    public class XperimentRects: Compressor
+    public class XperimentRects : Compressor
     {
         public FixedSizeForeseer Seer;
         protected int FieldcodeSymbols;
@@ -314,9 +310,9 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            FieldcodeSymbols = (int)Config[3];
-            ReduceBlocksize = (int)Config[4];
-            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
+            FieldcodeSymbols = (int) Config[3];
+            ReduceBlocksize = (int) Config[4];
+            Seer = new FixedSizeForeseer((int) Config[0], (int) Config[1], (int) Config[2], new HorzVertForeseer());
         }
 
         public override void Encode(IntField image, Stream output)
@@ -340,8 +336,8 @@ namespace i4c
                     if (rects.Count == 0 || rects[0].Width * rects[0].Height <= 1)
                         break;
 
-                    Rectangle r = new Rectangle(rects[0].Left*ReduceBlocksize, rects[0].Top*ReduceBlocksize,
-                        rects[0].Width*ReduceBlocksize, rects[0].Height*ReduceBlocksize);
+                    Rectangle r = new Rectangle(rects[0].Left * ReduceBlocksize, rects[0].Top * ReduceBlocksize,
+                        rects[0].Width * ReduceBlocksize, rects[0].Height * ReduceBlocksize);
                     r = CodecUtil.ShrinkRectangle(remains, r);
                     areases[i].Add(r);
 
@@ -349,7 +345,7 @@ namespace i4c
                     remains.ShadeRect(r.Left, r.Top, r.Width, r.Height, 0, 0);
                 }
 
-                SetCounter("areas|"+i, areases[i].Count);
+                SetCounter("areas|" + i, areases[i].Count);
 
                 IntField vis = fields[i].Clone();
                 vis.ArgbFromField(0, 1);
@@ -358,7 +354,7 @@ namespace i4c
                 for (int x = 0; x < cutmaps[i].Width; x++)
                     for (int y = 0; y < cutmaps[i].Height; y++)
                         if (cutmaps[i][x, y] > 0)
-                            vis.ShadeRect(x*ReduceBlocksize, y*ReduceBlocksize, ReduceBlocksize, ReduceBlocksize,
+                            vis.ShadeRect(x * ReduceBlocksize, y * ReduceBlocksize, ReduceBlocksize, ReduceBlocksize,
                                 0xFF7FFF7F, 0x00007F00);
                 AddImageArgb(vis, "vis" + i);
             }
@@ -383,7 +379,7 @@ namespace i4c
                     output.WriteInt32Optim(area.Left);
                     output.WriteInt32Optim(area.Top);
                 }
-                SetCounter("bytes|areas|x,y|"+i, output.Position - pos);
+                SetCounter("bytes|areas|x,y|" + i, output.Position - pos);
                 pos = output.Position;
             }
 
@@ -394,14 +390,14 @@ namespace i4c
                     output.WriteInt32Optim(area.Width);
                     output.WriteInt32Optim(area.Height);
                 }
-                SetCounter("bytes|areas|w,h|"+i, output.Position - pos);
+                SetCounter("bytes|areas|w,h|" + i, output.Position - pos);
                 pos = output.Position;
             }
 
             for (int i = 1; i <= 3; i++)
             {
                 var pts = CodecUtil.GetPixelCoords(cutmaps[i], 1);
-                SetCounter("leftpixels|"+i, pts.Count);
+                SetCounter("leftpixels|" + i, pts.Count);
                 output.WriteInt32Optim(pts.Count);
                 foreach (var pt in pts)
                 {
@@ -419,7 +415,7 @@ namespace i4c
                 {
                     int[] aredata = fields[i].GetRectData(area);
                     data.AddRange(aredata);
-                    visdata.AddRange(aredata.Select(val => unchecked((int)0xFF000000) | ((i == 1 ? 0xF00000 : i == 2 ? 0xF08000 : 0xF00080) >> (2-val*2))));
+                    visdata.AddRange(aredata.Select(val => unchecked((int) 0xFF000000) | ((i == 1 ? 0xF00000 : i == 2 ? 0xF08000 : 0xF00080) >> (2 - val * 2))));
                     fields[i].ShadeRect(area.Left, area.Top, area.Width, area.Height, 0, 0);
                 }
             }
@@ -428,10 +424,10 @@ namespace i4c
                 var pts = CodecUtil.GetPixelCoords(cutmaps[i], 1);
                 foreach (var pt in pts)
                 {
-                    Rectangle rect = new Rectangle(pt.X*ReduceBlocksize, pt.Y*ReduceBlocksize, ReduceBlocksize, ReduceBlocksize);
+                    Rectangle rect = new Rectangle(pt.X * ReduceBlocksize, pt.Y * ReduceBlocksize, ReduceBlocksize, ReduceBlocksize);
                     int[] aredata = fields[i].GetRectData(rect);
                     data.AddRange(aredata);
-                    visdata.AddRange(aredata.Select(val => unchecked((int)0xFF000000) | ((i == 1 ? 0x00F000 : i == 2 ? 0x80F000 : 0x00F080) >> (2-val*2))));
+                    visdata.AddRange(aredata.Select(val => unchecked((int) 0xFF000000) | ((i == 1 ? 0x00F000 : i == 2 ? 0x80F000 : 0x00F080) >> (2 - val * 2))));
                 }
             }
             int[] dataA = data.ToArray();
@@ -439,14 +435,14 @@ namespace i4c
             SetCounter("crux-pixels", data.Count);
             SetCounter("crux-rle-symbols", symbols.Length);
 
-            int viw = (int)(Math.Sqrt(data.Count) * 1.3);
-            int vih = (int)Math.Ceiling((double)data.Count / viw);
+            int viw = (int) (Math.Sqrt(data.Count) * 1.3);
+            int vih = (int) Math.Ceiling((double) data.Count / viw);
             IntField visual = new IntField(viw, vih);
             Array.Copy(visdata.ToArray(), visual.Data, visdata.Count);
             AddImageArgb(visual, "crux");
 
             var probs = CodecUtil.CountValues(symbols);
-            output.WriteUInt32Optim((uint)probs.Length);
+            output.WriteUInt32Optim((uint) probs.Length);
             for (int p = 0; p < probs.Length; p++)
                 output.WriteUInt64Optim(probs[p]);
             SetCounter("bytes|probs", output.Position - pos);
@@ -471,7 +467,7 @@ namespace i4c
         }
     }
 
-    public class XperimentPdiff: Compressor
+    public class XperimentPdiff : Compressor
     {
         protected Foreseer Seer;
 
@@ -483,7 +479,7 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
+            Seer = new FixedSizeForeseer((int) Config[0], (int) Config[1], (int) Config[2], new HorzVertForeseer());
         }
 
         public override void Encode(IntField image, Stream output)
@@ -551,13 +547,13 @@ namespace i4c
                 }
                 else
                 {
-                    xps.Add(CodecUtil.GetNextProbsGivenGreater(xs, given-1));
-                    yps.Add(CodecUtil.GetNextProbsGivenGreater(ys, given-1));
+                    xps.Add(CodecUtil.GetNextProbsGivenGreater(xs, given - 1));
+                    yps.Add(CodecUtil.GetNextProbsGivenGreater(ys, given - 1));
                 }
-                AddIntDump("xp-{0}".Fmt(given), xps.Last().Select(var => (int)var));
-                AddIntDump("yp-{0}".Fmt(given), yps.Last().Select(var => (int)var));
-                xpts.Add(xps.Last().Aggregate((tot, val) => tot+val));
-                ypts.Add(yps.Last().Aggregate((tot, val) => tot+val));
+                AddIntDump("xp-{0}".Fmt(given), xps.Last().Select(var => (int) var));
+                AddIntDump("yp-{0}".Fmt(given), yps.Last().Select(var => (int) var));
+                xpts.Add(xps.Last().Aggregate((tot, val) => tot + val));
+                ypts.Add(yps.Last().Aggregate((tot, val) => tot + val));
             }
 
             List<ulong[]> cps = new List<ulong[]>();
@@ -565,7 +561,7 @@ namespace i4c
             for (int given = 1; given <= 3; given++)
             {
                 cps.Add(CodecUtil.GetNextProbsGiven(cs, given));
-                AddIntDump("cp-{0}".Fmt(given), cps.Last().Select(var => (int)var));
+                AddIntDump("cp-{0}".Fmt(given), cps.Last().Select(var => (int) var));
             }
             ulong[] cpts = new ulong[4];
             for (int i = 0; i < cps.Count; i++)
@@ -618,19 +614,19 @@ namespace i4c
         public Point FindNextPixel(IntField image, int cx, int cy)
         {
             int dist = 0;
-            while (dist < (image.Width/2 + image.Height/2 + 2))
+            while (dist < (image.Width / 2 + image.Height / 2 + 2))
             {
                 for (int x = dist, y = 0; x > 0; x--, y++)
-                    if (image.GetWrapped(cx+x, cy+y) != 0)
+                    if (image.GetWrapped(cx + x, cy + y) != 0)
                         return new Point(x, y);
                 for (int x = 0, y = dist; y > 0; x--, y--)
-                    if (image.GetWrapped(cx+x, cy+y) != 0)
+                    if (image.GetWrapped(cx + x, cy + y) != 0)
                         return new Point(x, y);
                 for (int x = -dist, y = 0; x < 0; x++, y--)
-                    if (image.GetWrapped(cx+x, cy+y) != 0)
+                    if (image.GetWrapped(cx + x, cy + y) != 0)
                         return new Point(x, y);
                 for (int x = 0, y = -dist; y < 0; x++, y++)
-                    if (image.GetWrapped(cx+x, cy+y) != 0)
+                    if (image.GetWrapped(cx + x, cy + y) != 0)
                         return new Point(x, y);
                 dist++;
             }
@@ -643,7 +639,7 @@ namespace i4c
         }
     }
 
-    public class XperimentSplit: Compressor
+    public class XperimentSplit : Compressor
     {
         protected Foreseer Seer;
 
@@ -655,7 +651,7 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            Seer = new FixedSizeForeseer((int)Config[0], (int)Config[1], (int)Config[2], new HorzVertForeseer());
+            Seer = new FixedSizeForeseer((int) Config[0], (int) Config[1], (int) Config[2], new HorzVertForeseer());
         }
 
         public override void Encode(IntField image, Stream output)
@@ -684,7 +680,7 @@ namespace i4c
         }
     }
 
-    public class XperimentBackLzw: Compressor
+    public class XperimentBackLzw : Compressor
     {
         public override void Encode(IntField image, Stream output)
         {
@@ -717,7 +713,7 @@ namespace i4c
         }
     }
 
-    public class XperimentResolution: Compressor
+    public class XperimentResolution : Compressor
     {
         public override void Encode(IntField image, Stream output)
         {
@@ -730,9 +726,9 @@ namespace i4c
 
             for (int i = 1; i < scales.Count; i++)
             {
-                IntField predicted = new IntField(scales[i-1].Width, scales[i-1].Height);
+                IntField predicted = new IntField(scales[i - 1].Width, scales[i - 1].Height);
                 IntField shrunk = scales[i];
-                AddImageGrayscale(shrunk, "res"+i);
+                AddImageGrayscale(shrunk, "res" + i);
                 for (int y = 0; y < predicted.Height; y++)
                 {
                     for (int x = 0; x < predicted.Width; x++)
@@ -751,7 +747,7 @@ namespace i4c
                 }
                 //AddImageGrayscale(predicted, "pred"+i);
                 for (int p = 0; p < predicted.Data.Length; p++)
-                    predicted.Data[p] ^= scales[i-1].Data[p];
+                    predicted.Data[p] ^= scales[i - 1].Data[p];
                 //AddImageGrayscale(predicted, "diff"+i);
             }
         }

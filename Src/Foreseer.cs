@@ -19,7 +19,7 @@ namespace i4c
         }
     }
 
-    public class NullForeseer: Foreseer
+    public class NullForeseer : Foreseer
     {
         public override int Foresee(IntField image, int x, int y, int p)
         {
@@ -27,7 +27,7 @@ namespace i4c
         }
     }
 
-    public class MostFrequentForeseer: Foreseer
+    public class MostFrequentForeseer : Foreseer
     {
         private int _size;
 
@@ -61,7 +61,7 @@ namespace i4c
         }
     }
 
-    public class BackgroundForeseer: Foreseer
+    public class BackgroundForeseer : Foreseer
     {
         private int _horzLookback = 6;
         private int _vertLookback = 6;
@@ -86,19 +86,19 @@ namespace i4c
         private pattern findPattern(IntField image, int fx, int fy, int tw, int th)
         {
             int c = image[fx, fy];
-            int h = image[fx+1, fy];
-            int v = image[fx, fy+1];
+            int h = image[fx + 1, fy];
+            int v = image[fx, fy + 1];
 
             bool certainlyNotCH = c != h;
             bool certainlyNotCV = c != v;
             bool certainlyNotSolid = c != h || c != v;
 
-            for (int y = fy+1; y < fy+th; y++)
-                for (int x = fx+1; x < fx+tw; x++)
+            for (int y = fy + 1; y < fy + th; y++)
+                for (int x = fx + 1; x < fx + tw; x++)
                 {
                     c = image[x, y];
-                    h = image[x-1, y];
-                    v = image[x, y-1];
+                    h = image[x - 1, y];
+                    v = image[x, y - 1];
 
                     if (!certainlyNotSolid && (c != h || c != v))
                         certainlyNotSolid = true;
@@ -140,13 +140,13 @@ namespace i4c
 
     }
 
-    public class HorzVertForeseer: Foreseer
+    public class HorzVertForeseer : Foreseer
     {
         public override int Foresee(IntField image, int x, int y, int p)
         {
-            int l = x == 0 ? 0 : image.Data[p-1];
-            int t = y == 0 ? 0 : image.Data[p-image.Width];
-            int tl = (x == 0 || y == 0) ? 0 : image.Data[p-image.Width-1];
+            int l = x == 0 ? 0 : image.Data[p - 1];
+            int t = y == 0 ? 0 : image.Data[p - image.Width];
+            int tl = (x == 0 || y == 0) ? 0 : image.Data[p - image.Width - 1];
 
             if (l == tl && t == tl)
                 return tl; // solid fill
@@ -161,13 +161,13 @@ namespace i4c
         }
     }
 
-    public class VertForeseer: Foreseer
+    public class VertForeseer : Foreseer
     {
         public override int Foresee(IntField image, int x, int y, int p)
         {
-            int l = x == 0 ? 0 : image.Data[p-1];
-            int t = y == 0 ? 0 : image.Data[p-image.Width];
-            int tl = (x == 0 || y == 0) ? 0 : image.Data[p-image.Width-1];
+            int l = x == 0 ? 0 : image.Data[p - 1];
+            int t = y == 0 ? 0 : image.Data[p - image.Width];
+            int tl = (x == 0 || y == 0) ? 0 : image.Data[p - image.Width - 1];
 
             if (l == tl && t == tl)
                 return tl; // solid fill
@@ -178,7 +178,7 @@ namespace i4c
         }
     }
 
-    public class FixedSizeMonoForeseer: Foreseer
+    public class FixedSizeMonoForeseer : Foreseer
     {
         private int _width;
         private int _height;
@@ -245,7 +245,7 @@ namespace i4c
         {
             mostFreqSymbol = secondFreqSymbol = int.MinValue;
 
-            if (x < _width-1-_xpos || x >= image.Width - _xpos || y < _height-1)
+            if (x < _width - 1 - _xpos || x >= image.Width - _xpos || y < _height - 1)
                 return null;
 
             IntField area = image.Extract(x - _width + 1 + _xpos, y - _height + 1, _width, _height);
@@ -280,7 +280,7 @@ namespace i4c
         }
     }
 
-    public class FixedSizeForeseer: Foreseer
+    public class FixedSizeForeseer : Foreseer
     {
         private int _width;
         private int _height;
@@ -353,7 +353,7 @@ namespace i4c
 
         public string ExtractArea(IntField image, int x, int y)
         {
-            if (x < _width-1-_xpos || x >= image.Width - _xpos || y < _height-1)
+            if (x < _width - 1 - _xpos || x >= image.Width - _xpos || y < _height - 1)
                 return null;
 
             IntField area = image.Extract(x - _width + 1 + _xpos, y - _height + 1, _width, _height);

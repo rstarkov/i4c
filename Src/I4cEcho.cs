@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using RT.Util.Collections;
+using System.Linq;
 using RT.Util.ExtensionMethods;
 
 namespace i4c
 {
-    public class I4cEcho: Compressor
+    public class I4cEcho : Compressor
     {
         private int _backgrLargeStepSize = 32;
         private int _backgrLargeAreaThresh = 3000;
@@ -150,9 +148,9 @@ namespace i4c
 
         private ulong[][] mrleGetProbs(int[] data, int cutoff)
         {
-            ulong[][] probs = new ulong[cutoff+1][];
+            ulong[][] probs = new ulong[cutoff + 1][];
             for (int i = 0; i <= cutoff; i++)
-                probs[i] = new ulong[cutoff+1];
+                probs[i] = new ulong[cutoff + 1];
             int prev = 0;
             for (int p = 0; p < data.Length; p++)
             {
@@ -168,7 +166,7 @@ namespace i4c
             ArithmeticWriter aw = new ArithmeticWriter(ms, null);
             ulong[] tots = new ulong[probs.Length];
             for (int i = 0; i < tots.Length; i++)
-                tots[i] = (ulong)probs[i].Sum(val => (long)val);
+                tots[i] = (ulong) probs[i].Sum(val => (long) val);
 
             int prev = 0;
             for (int p = 0; p < data.Length; p++)
@@ -186,7 +184,7 @@ namespace i4c
         {
             MemoryStream ms = new MemoryStream();
             for (int p = 0; p < data.Length; p++)
-                ms.WriteUInt32Optim((uint)data[p]);
+                ms.WriteUInt32Optim((uint) data[p]);
             return ms.ToArray();
         }
 
@@ -200,11 +198,11 @@ namespace i4c
                 largeBackgrMap = image.Clone();
                 int x = 0, y = 0, xfr = 0;
                 double yd = 0;
-                double ystep = _backgrLargeStepSize * 0.866 / ((double)image.Width / _backgrLargeStepSize);
+                double ystep = _backgrLargeStepSize * 0.866 / ((double) image.Width / _backgrLargeStepSize);
                 int curfill = -2;
                 while (true)
                 {
-                    y = (int)yd;
+                    y = (int) yd;
                     if (y >= image.Height)
                         break;
 
@@ -221,7 +219,7 @@ namespace i4c
                     x += _backgrLargeStepSize;
                     if (x >= image.Width)
                     {
-                        xfr += _backgrLargeStepSize/3;
+                        xfr += _backgrLargeStepSize / 3;
                         if (xfr > _backgrLargeStepSize)
                             xfr -= _backgrLargeStepSize;
                         x = xfr;
@@ -267,7 +265,7 @@ namespace i4c
                         if (lastfgstart == -1 && backgr[x, y] == -1)
                         {
                             lastfgstart = x;
-                            lastbg = x == 0 ? -1 : backgr[x-1, y];
+                            lastbg = x == 0 ? -1 : backgr[x - 1, y];
                         }
                         x++;
                     }
@@ -297,7 +295,7 @@ namespace i4c
                         if (lastfgstart == -1 && backgr[x, y] == -1)
                         {
                             lastfgstart = y;
-                            lastbg = y == 0 ? -1 : backgr[x, y-1];
+                            lastbg = y == 0 ? -1 : backgr[x, y - 1];
                         }
                         y++;
                     }
@@ -310,8 +308,8 @@ namespace i4c
                 {
                     if (backgr.Data[p] == -1 && lastc != -1)
                         backgr.Floodfill(p % backgr.Width, p / backgr.Width, lastc);
-                    else if (p > 0 && backgr.Data[p-1] == -1 && backgr.Data[p] != -1)
-                        backgr.Floodfill((p-1) % backgr.Width, (p-1) / backgr.Width, backgr.Data[p]);
+                    else if (p > 0 && backgr.Data[p - 1] == -1 && backgr.Data[p] != -1)
+                        backgr.Floodfill((p - 1) % backgr.Width, (p - 1) / backgr.Width, backgr.Data[p]);
                     if (backgr.Data[p] != -1)
                         lastc = backgr.Data[p];
                 }

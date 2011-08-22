@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using RT.Util;
 using RT.Util.ExtensionMethods;
-using System.Linq;
-using System.IO;
 
 namespace i4c
 {

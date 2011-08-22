@@ -1,10 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using RT.Util;
 using RT.Util.Drawing;
-using System.Collections.Generic;
-using RT.Util.Collections;
 
 namespace i4c
 {
@@ -32,7 +31,7 @@ namespace i4c
         {
             Width = width;
             Height = height;
-            Data = new int[Width*Height];
+            Data = new int[Width * Height];
         }
 
         public int this[int x, int y]
@@ -100,9 +99,9 @@ namespace i4c
 
             Width = bmp.Width;
             Height = bmp.Height;
-            Data = new int[Width*Height];
+            Data = new int[Width * Height];
 
-            for (int p = 0, bp = 0; p < Width*Height; p++, bp += 4)
+            for (int p = 0, bp = 0; p < Width * Height; p++, bp += 4)
                 //                alpha                       red                      green              blue
                 Data[p] = (bb.Bits[bp + 3] << 24) | (bb.Bits[bp + 2] << 16) | (bb.Bits[bp + 1] << 8) | bb.Bits[bp];
         }
@@ -110,13 +109,13 @@ namespace i4c
         public Bitmap ArgbToBitmap()
         {
             BytesBitmap bb = new BytesBitmap(Width, Height, PixelFormat.Format32bppArgb);
-            for (int p = 0, bp = 0; p < Width*Height; p++)
+            for (int p = 0, bp = 0; p < Width * Height; p++)
             {
                 int data = Data[p];
-                bb.Bits[bp++] = (byte)data;          // blue
-                bb.Bits[bp++] = (byte)(data >> 8);   // green
-                bb.Bits[bp++] = (byte)(data >> 16);  // red
-                bb.Bits[bp++] = (byte)(data >> 24);  // alpha
+                bb.Bits[bp++] = (byte) data;          // blue
+                bb.Bits[bp++] = (byte) (data >> 8);   // green
+                bb.Bits[bp++] = (byte) (data >> 16);  // red
+                bb.Bits[bp++] = (byte) (data >> 24);  // alpha
             }
             return bb.GetBitmapCopy();
         }
@@ -124,13 +123,13 @@ namespace i4c
         public void ArgbSetAlpha(byte alpha)
         {
             int alpha_int = alpha << 24;
-            for (int p = 0; p < Width*Height; p++)
+            for (int p = 0; p < Width * Height; p++)
                 Data[p] = Data[p] & 0xFFFFFF | alpha_int;
         }
 
         public void ArgbTo4c()
         {
-            for (int p = 0; p < Width*Height; p++)
+            for (int p = 0; p < Width * Height; p++)
             {
                 // grayscale ranging 0 .. 765
                 int grayscale = (Data[p] & 0xFF) + ((Data[p] >> 8) & 0xFF) + ((Data[p] >> 16) & 0xFF);
@@ -149,11 +148,11 @@ namespace i4c
         {
             if (min == max)
             {
-                for (int p = 0; p < Width*Height; p++)
-                    Data[p] = unchecked((int)0xFF000000);
+                for (int p = 0; p < Width * Height; p++)
+                    Data[p] = unchecked((int) 0xFF000000);
             }
             else
-                for (int p = 0; p < Width*Height; p++)
+                for (int p = 0; p < Width * Height; p++)
                 {
                     int val = (255 * (Data[p] - min)) / (max - min);
                     Data[p] = (255 << 24) | (val << 16) | (val << 8) | val;
@@ -179,7 +178,7 @@ namespace i4c
                 bool inRunBelow = false;
 
                 // Move leftwards as far as possible
-                while (x > 0 && this[x-1, y] == oldcolor && done[x-1, y] == 0)
+                while (x > 0 && this[x - 1, y] == oldcolor && done[x - 1, y] == 0)
                     x--;
 
                 // Floodfill to the right
@@ -192,23 +191,23 @@ namespace i4c
                     // Check above
                     if (y > 0)
                     {
-                        if (!inRunAbove && this[x, y-1] == oldcolor && done[x, y-1] == 0)
+                        if (!inRunAbove && this[x, y - 1] == oldcolor && done[x, y - 1] == 0)
                         {
-                            queue.Enqueue(new Point(x, y-1));
+                            queue.Enqueue(new Point(x, y - 1));
                             inRunAbove = true;
                         }
-                        else if (inRunAbove && this[x, y-1] != oldcolor)
+                        else if (inRunAbove && this[x, y - 1] != oldcolor)
                             inRunAbove = false;
                     }
                     // Check below
-                    if (y < Height-1)
+                    if (y < Height - 1)
                     {
-                        if (!inRunBelow && this[x, y+1] == oldcolor && done[x, y+1] == 0)
+                        if (!inRunBelow && this[x, y + 1] == oldcolor && done[x, y + 1] == 0)
                         {
-                            queue.Enqueue(new Point(x, y+1));
+                            queue.Enqueue(new Point(x, y + 1));
                             inRunBelow = true;
                         }
-                        else if (inRunBelow && this[x, y+1] != oldcolor)
+                        else if (inRunBelow && this[x, y + 1] != oldcolor)
                             inRunBelow = false;
                     }
 
@@ -291,13 +290,13 @@ namespace i4c
 
         public void Conditional(Func<int, bool> condition)
         {
-            for (int p = 0; p < Width*Height; p++)
+            for (int p = 0; p < Width * Height; p++)
                 Data[p] = condition(Data[p]) ? 1 : 0;
         }
 
         public void Map(Func<int, int> map)
         {
-            for (int p = 0; p < Width*Height; p++)
+            for (int p = 0; p < Width * Height; p++)
                 Data[p] = map(Data[p]);
         }
 
@@ -305,7 +304,7 @@ namespace i4c
         {
             IntField result = new IntField(width, height);
             for (int y = fy; y < fy + height; y++)
-                Array.Copy(Data, fx + y*Width, result.Data, (y-fy)*width, width);
+                Array.Copy(Data, fx + y * Width, result.Data, (y - fy) * width, width);
             return result;
         }
 
@@ -317,9 +316,9 @@ namespace i4c
             for (int y = 0; y < Height; y++)
             {
                 if (y % 2 == 0)
-                    Array.Copy(Data, y*Width, field1.Data, (y/2)*Width, Width);
+                    Array.Copy(Data, y * Width, field1.Data, (y / 2) * Width, Width);
                 else
-                    Array.Copy(Data, y*Width, field2.Data, (y/2)*Width, Width);
+                    Array.Copy(Data, y * Width, field2.Data, (y / 2) * Width, Width);
             }
         }
 
@@ -330,10 +329,10 @@ namespace i4c
             {
                 for (int x = 0; x < img.Width; x++)
                 {
-                    int ix_end = Math.Min(x*blocksize + blocksize, Width);
-                    int iy_end = Math.Min(y*blocksize + blocksize, Height);
-                    for (int iy = y*blocksize; iy < iy_end; iy++)
-                        for (int ix = x*blocksize; ix < ix_end; ix++)
+                    int ix_end = Math.Min(x * blocksize + blocksize, Width);
+                    int iy_end = Math.Min(y * blocksize + blocksize, Height);
+                    for (int iy = y * blocksize; iy < iy_end; iy++)
+                        for (int ix = x * blocksize; ix < ix_end; ix++)
                             if (this[ix, iy] != 0)
                             {
                                 img[x, y] = 1;
@@ -353,7 +352,7 @@ namespace i4c
                 h = Height - y;
             for (int iy = y; iy < y + h; iy++)
                 for (int ix = x; ix < x + w; ix++)
-                    this[ix, iy] = (this[ix, iy] & (int)shadeAnd) | (int)shadeOr;
+                    this[ix, iy] = (this[ix, iy] & (int) shadeAnd) | (int) shadeOr;
         }
 
         public int[] GetRectData(Rectangle rect)
@@ -367,25 +366,25 @@ namespace i4c
             if (fy + h > Height) h = Height - fy;
             int[] res = new int[w * h];
             for (int y = fy; y < fy + h; y++)
-                Array.Copy(Data, y*Width + fx, res, (y - fy) * w, w);
+                Array.Copy(Data, y * Width + fx, res, (y - fy) * w, w);
             return res;
         }
 
         public IntField HalfResNearestNeighbour()
         {
-            IntField result = new IntField((Width+1)/2, (Height+1)/2);
+            IntField result = new IntField((Width + 1) / 2, (Height + 1) / 2);
             for (int x = 0; x < Width; x += 2)
                 for (int y = 0; y < Height; y += 2)
-                    result[x>>1, y>>1] = this[x, y];
+                    result[x >> 1, y >> 1] = this[x, y];
             return result;
         }
 
         public IntField HalfResHighestCount()
         {
-            IntField result = new IntField((Width+1)/2, (Height+1)/2);
+            IntField result = new IntField((Width + 1) / 2, (Height + 1) / 2);
             for (int x = 0; x < Width; x += 2)
                 for (int y = 0; y < Height; y += 2)
-                    result[x>>1, y>>1] = MostFrequent(this[x, y], this[x+1, y], this[x, y+1], this[x+1, y+1]);
+                    result[x >> 1, y >> 1] = MostFrequent(this[x, y], this[x + 1, y], this[x, y + 1], this[x + 1, y + 1]);
             return result;
         }
 

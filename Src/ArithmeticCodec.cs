@@ -98,7 +98,7 @@ namespace i4c
 
         private void OutputBit(bool bit)
         {
-            if (bit) _curbyte |= (byte)(1 << _curbit);
+            if (bit) _curbyte |= (byte) (1 << _curbit);
             if (_curbit >= 7)
             {
                 BaseStream.WriteByte(_curbyte);

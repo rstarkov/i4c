@@ -25,7 +25,7 @@ namespace i4c
                 if (maxSym < sym)
                     maxSym = sym;
                 if (sym >= result.Length)
-                    Array.Resize(ref result, Math.Max(sym+1, result.Length * 2));
+                    Array.Resize(ref result, Math.Max(sym + 1, result.Length * 2));
                 result[sym]++;
             }
             Array.Resize(ref result, maxSym + 1);
@@ -65,7 +65,7 @@ namespace i4c
                 {
                     if (image[xto, yto] == 0)
                     {
-                        xto_max = xto-1;
+                        xto_max = xto - 1;
                         break;
                     }
                 }
@@ -76,9 +76,9 @@ namespace i4c
 
             List<int> todelete = new List<int>();
             for (int i = 1; i < rects.Count; i++)
-                if (rects[i].Width == rects[i-1].Width)
-                    todelete.Add(i-1);
-            for (int i = todelete.Count-1; i >= 0; i--)
+                if (rects[i].Width == rects[i - 1].Width)
+                    todelete.Add(i - 1);
+            for (int i = todelete.Count - 1; i >= 0; i--)
                 rects.RemoveAt(todelete[i]);
 
             return rects;
@@ -99,7 +99,7 @@ namespace i4c
                     if (rects[j].Contains(rects[i].Left, rects[i].Top) && rects[j].Right == rects[i].Right && rects[j].Bottom == rects[i].Bottom)
                         if (!todelete.Contains(i))
                             todelete.Add(i);
-            for (int i = todelete.Count-1; i >= 0; i--)
+            for (int i = todelete.Count - 1; i >= 0; i--)
                 rects.RemoveAt(todelete[i]);
 
             return rects.OrderBy(rect => -rect.Width * rect.Height).ToList();
@@ -186,11 +186,11 @@ namespace i4c
             var aw = new ArithmeticWriter(ms, probsProbs);
             for (int i = 0; i < count; i++)
             {
-                aw.WriteSymbol(freqs[i] >= 31 ? 31 : (int)freqs[i]);
+                aw.WriteSymbol(freqs[i] >= 31 ? 31 : (int) freqs[i]);
             }
             aw.Flush();
             var arr = ms.ToArray();
-            master.WriteUInt32Optim((uint)arr.Length);
+            master.WriteUInt32Optim((uint) arr.Length);
             master.Write(arr, 0, arr.Length);
             for (int i = 0; i < count; i++)
                 if (freqs[i] >= 31)
@@ -214,7 +214,7 @@ namespace i4c
             var acr = new ArithmeticCodingReader(new MemoryStream(arr), probsProbs);
             var freqs = new ulong[numFreqs];
             for (int i = 0; i < numFreqs; i++)
-                freqs[i] = (ulong)acr.ReadSymbol();
+                freqs[i] = (ulong) acr.ReadSymbol();
             acr.Close();
             for (int i = 0; i < numFreqs; i++)
                 if (freqs[i] == 31)
@@ -241,7 +241,7 @@ namespace i4c
                 temp.Map(x => x == i ? 1 : 0);
                 var field = runlengthCodec.Encode(temp.Data);
                 CodecUtil.Shift(field, 1);
-                compr.SetCounter("symbols|field-"+i, field.Length);
+                compr.SetCounter("symbols|field-" + i, field.Length);
                 fields.Add(field);
                 compr.AddImageGrayscale(temp, 0, 1, "field" + i);
             }
@@ -253,10 +253,10 @@ namespace i4c
             IntField image = new IntField(width, height);
             for (int i = 1; i <= 3; i++)
             {
-                CodecUtil.Shift(fields[i-1], -1);
-                var f = runlengthCodec.Decode(fields[i-1]);
+                CodecUtil.Shift(fields[i - 1], -1);
+                var f = runlengthCodec.Decode(fields[i - 1]);
 
-                for (int p = 0; p < width*height; p++)
+                for (int p = 0; p < width * height; p++)
                     if (f[p] == 1)
                         image.Data[p] = i;
 
@@ -291,14 +291,14 @@ namespace i4c
             var data = runlengthCodec.Decode(runs);
             for (int i = 1; i <= 3; i++)
             {
-                int offs = width*height * (i-1);
-                for (int p = 0; p < width*height; p++)
+                int offs = width * height * (i - 1);
+                for (int p = 0; p < width * height; p++)
                     if (data[offs + p] == 1)
                         image.Data[p] = i;
 
                 // Visualise
                 IntField img = new IntField(width, height);
-                Array.Copy(data, offs, img.Data, 0, width*height);
+                Array.Copy(data, offs, img.Data, 0, width * height);
                 compr.AddImageGrayscale(img, 0, 1, "field" + i);
             }
             compr.AddImageGrayscale(image, 0, 3, "xformed");
@@ -315,18 +315,18 @@ namespace i4c
             {
                 changed = false;
                 for (int y = 0; y < image.Height; y++)
-                    for (int x = 1; x < image.Width-1; x++)
-                        if (image[x-1, y] == image[x+1, y] && image[x, y] != image[x-1, y])
+                    for (int x = 1; x < image.Width - 1; x++)
+                        if (image[x - 1, y] == image[x + 1, y] && image[x, y] != image[x - 1, y])
                         {
-                            image[x, y] = image[x-1, y];
+                            image[x, y] = image[x - 1, y];
                             changed = true;
                         }
 
                 for (int x = 0; x < image.Width; x++)
-                    for (int y = 1; y < image.Height-1; y++)
-                        if (image[x, y-1] == image[x, y+1] && image[x, y] != image[x, y-1])
+                    for (int y = 1; y < image.Height - 1; y++)
+                        if (image[x, y - 1] == image[x, y + 1] && image[x, y] != image[x, y - 1])
                         {
-                            image[x, y] = image[x, y-1];
+                            image[x, y] = image[x, y - 1];
                             changed = true;
                         }
 
@@ -341,25 +341,25 @@ namespace i4c
             {
                 changed = false;
                 for (int y = 0; y < image.Height; y++)
-                    for (int x = 2; x < image.Width-1; x++)
+                    for (int x = 2; x < image.Width - 1; x++)
                     {
-                        if (image[x-2, y] == image[x+1, y] && image[x, y] != image[x-2, y])
+                        if (image[x - 2, y] == image[x + 1, y] && image[x, y] != image[x - 2, y])
                         {
-                            image[x, y] = image[x-2, y];
+                            image[x, y] = image[x - 2, y];
                             changed = true;
                         }
-                        if (image[x-2, y] == image[x+1, y] && image[x-1, y] != image[x-2, y])
+                        if (image[x - 2, y] == image[x + 1, y] && image[x - 1, y] != image[x - 2, y])
                         {
-                            image[x-1, y] = image[x-2, y];
+                            image[x - 1, y] = image[x - 2, y];
                             changed = true;
                         }
                     }
 
                 for (int x = 0; x < image.Width; x++)
-                    for (int y = 2; y < image.Height-1; y++)
-                        if (image[x, y-2] == image[x, y+1] && image[x, y-1] != image[x, y-2])
+                    for (int y = 2; y < image.Height - 1; y++)
+                        if (image[x, y - 2] == image[x, y + 1] && image[x, y - 1] != image[x, y - 2])
                         {
-                            image[x, y-1] = image[x, y-2];
+                            image[x, y - 1] = image[x, y - 2];
                             changed = true;
                         }
 
@@ -397,24 +397,24 @@ namespace i4c
                 for (int x = 0; x < image.Width; x++)
                     if (processed[x, y] == -2)
                     {
-                        if (x > 0 && processed[x-1, y] == -1)
+                        if (x > 0 && processed[x - 1, y] == -1)
                         {
-                            image.Floodfill(x, y, image[x-1, y]);
+                            image.Floodfill(x, y, image[x - 1, y]);
                             processed.Floodfill(x, y, -3);
                         }
-                        else if (y > 0 && processed[x, y-1] == -1)
+                        else if (y > 0 && processed[x, y - 1] == -1)
                         {
-                            image.Floodfill(x, y, image[x, y-1]);
+                            image.Floodfill(x, y, image[x, y - 1]);
                             processed.Floodfill(x, y, -3);
                         }
-                        else if (x < image.Width-1 && processed[x+1, y] == -1)
+                        else if (x < image.Width - 1 && processed[x + 1, y] == -1)
                         {
-                            image.Floodfill(x, y, image[x+1, y]);
+                            image.Floodfill(x, y, image[x + 1, y]);
                             processed.Floodfill(x, y, -3);
                         }
-                        else if (y < image.Height-1 && processed[x, y+1] == -1)
+                        else if (y < image.Height - 1 && processed[x, y + 1] == -1)
                         {
-                            image.Floodfill(x, y, image[x, y+1]);
+                            image.Floodfill(x, y, image[x, y + 1]);
                             processed.Floodfill(x, y, -3);
                         }
                     }
@@ -426,12 +426,12 @@ namespace i4c
         {
             int[] result = new int[image.Width * ((image.Height + lineheight - 1) / lineheight)];
             int p = 0;
-            for (int ly = 0; ly < image.Height; ly+=lineheight)
+            for (int ly = 0; ly < image.Height; ly += lineheight)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
                     int val = 0;
-                    for (int y = ly; y < ly+lineheight && y < image.Height; y++)
+                    for (int y = ly; y < ly + lineheight && y < image.Height; y++)
                         val = (val << 1) | (image[x, y] == 0 ? 0 : 1);
                     result[p++] = val;
                 }
@@ -448,9 +448,9 @@ namespace i4c
 
         public static int[] InterleaveNegatives(int[] data)
         {
-            int[] res = (int[])data.Clone();
+            int[] res = (int[]) data.Clone();
             for (int i = 0; i < res.Length; i++)
-                res[i] = (res[i] <= 0) ? (-2*res[i]) : (2*res[i] - 1);
+                res[i] = (res[i] <= 0) ? (-2 * res[i]) : (2 * res[i] - 1);
             return res;
         }
 
@@ -463,7 +463,7 @@ namespace i4c
                 if (prev == given)
                 {
                     if (vals[i] >= result.Length)
-                        Array.Resize(ref result, (vals[i]+1) * 3 / 2);
+                        Array.Resize(ref result, (vals[i] + 1) * 3 / 2);
                     result[vals[i]]++;
                 }
                 prev = vals[i];
@@ -480,7 +480,7 @@ namespace i4c
                 if (prev > given)
                 {
                     if (vals[i] >= result.Length)
-                        Array.Resize(ref result, (vals[i]+1) * 3 / 2);
+                        Array.Resize(ref result, (vals[i] + 1) * 3 / 2);
                     result[vals[i]]++;
                 }
                 prev = vals[i];
@@ -505,7 +505,7 @@ namespace i4c
 
         public int Next(int newvalue)
         {
-            int result = newvalue - (int)_previous;
+            int result = newvalue - (int) _previous;
             _previous = newvalue;
             return result;
         }

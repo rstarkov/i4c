@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using RT.Util;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
-using System;
 
 namespace i4c
 {
@@ -49,7 +48,7 @@ namespace i4c
             for (int stage = 0; stage < _rlStages; stage++)
             {
                 prod = prod * (_symMax + 1);
-                _maxRunLength[stage] = (stage == 0 ? 0 : _maxRunLength[stage-1]) + prod;
+                _maxRunLength[stage] = (stage == 0 ? 0 : _maxRunLength[stage - 1]) + prod;
             }
             _maxRunLengthPossible = _maxRunLength[_rlStages - 1];
         }
@@ -95,7 +94,7 @@ namespace i4c
                 else
                 {
                     // Determine whether to start a run or not
-                    if (pos+2 < data.Length && data[pos] == data[pos+1] && data[pos] == data[pos+2])
+                    if (pos + 2 < data.Length && data[pos] == data[pos + 1] && data[pos] == data[pos + 2])
                     {
                         runSymbolIndex = -1;
                         for (int i = 0; i < _symRle.Length; i++)

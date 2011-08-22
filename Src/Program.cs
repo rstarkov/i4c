@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Security.Permissions;
 using System.Threading;
 using System.Windows.Forms;
+using RT.KitchenSink;
+using RT.KitchenSink.Collections;
 using RT.Util;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
-using RT.Util.Collections;
-using System.Drawing.Imaging;
-using RT.KitchenSink.Collections;
-using RT.KitchenSink;
 
 namespace i4c
 {
@@ -61,7 +60,7 @@ namespace i4c
             }
             else if (args[0] == "?")
             {
-                DlgMessage.ShowInfo("Usage:\n  i4c.exe - run interactive GUI.\n  i4c.exe <algorithm> <filename> [<arg1> <arg2> ...] - compress/decompress single file.\n  i4c.exe benchmark <algorithm> [<arg1> <arg2> ...] - benchmark on all files in cur dir.\n\nAvailable algorithms:\n\n" + "".Join(Compressors.Keys.Select(compr => "* " + compr + "\n")));
+                DlgMessage.ShowInfo("Usage:\n  i4c.exe - run interactive GUI.\n  i4c.exe <algorithm> <filename> [<arg1> <arg2> ...] - compress/decompress single file.\n  i4c.exe benchmark <algorithm> [<arg1> <arg2> ...] - benchmark on all files in cur dir.\n\nAvailable algorithms:\n\n" + Compressors.Keys.Select(compr => "* " + compr + "\n").JoinString());
             }
             else if (args[0] == "benchmark")
             {

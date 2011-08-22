@@ -1,14 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
+using RT.KitchenSink.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Streams;
-using RT.Util.Collections;
-using RT.KitchenSink.Collections;
 
 namespace i4c
 {
-    public class TimwiCec: Compressor
+    public class TimwiCec : Compressor
     {
         public static ulong[] kindProbsProbs = new ulong[32] { 1599, 370, 174, 137, 76, 59, 41, 36, 31, 18, 18, 21, 15, 10, 9, 5, 12, 6, 7, 8, 2, 6, 2, 4, 4, 1, 3, 7, 5, 1, 2, 128 };
         public static ulong[] runLProbsProbs = new ulong[32] { 594, 274, 294, 231, 176, 134, 84, 67, 54, 47, 54, 31, 29, 29, 13, 18, 18, 21, 16, 11, 14, 19, 6, 8, 14, 14, 8, 9, 3, 7, 7, 512 };
@@ -23,8 +21,8 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            blocksizeX = (int)Config[0];
-            blocksizeY = (int)Config[1];
+            blocksizeX = (int) Config[0];
+            blocksizeY = (int) Config[1];
         }
 
         public override void Encode(IntField source, Stream output)
@@ -37,7 +35,7 @@ namespace i4c
             int blocks = blocksX * blocksY;
 
             source.ArgbTo4c();
-            uint[] pixels = source.Data.Select(px => (uint)px).ToArray();
+            uint[] pixels = source.Data.Select(px => (uint) px).ToArray();
 
             var newPixels = new uint[pixels.Length];
             int[] kinds = new int[blocks];
@@ -71,11 +69,11 @@ namespace i4c
                     else
                     {
                         context1 = ((context1 << 2) & 0x3FFF3FFF3FFF3C) | ((context2 & 0xC000000000000000) >> 62);
-                        context2 = ((context2 << 2) & 0xFF3FFF3FFF3FFF3C) | (ulong)pixels[i - 1];
+                        context2 = ((context2 << 2) & 0xFF3FFF3FFF3FFF3C) | (ulong) pixels[i - 1];
                         if (x + 4 < bw)
                         {
-                            context1 |= ((ulong)pixels[i - 7 * bw + 4] << 38) | ((ulong)pixels[i - 6 * bw + 4] << 22) | ((ulong)pixels[i - 5 * bw + 4] << 6);
-                            context2 |= ((ulong)pixels[i - 4 * bw + 4] << 54) | ((ulong)pixels[i - 3 * bw + 4] << 38) | ((ulong)pixels[i - 2 * bw + 4] << 22) | ((ulong)pixels[i - 1 * bw + 4] << 6);
+                            context1 |= ((ulong) pixels[i - 7 * bw + 4] << 38) | ((ulong) pixels[i - 6 * bw + 4] << 22) | ((ulong) pixels[i - 5 * bw + 4] << 6);
+                            context2 |= ((ulong) pixels[i - 4 * bw + 4] << 54) | ((ulong) pixels[i - 3 * bw + 4] << 38) | ((ulong) pixels[i - 2 * bw + 4] << 22) | ((ulong) pixels[i - 1 * bw + 4] << 6);
                         }
                     }
                     ulong[] prev = predictor.Get(context1, context2);
@@ -88,9 +86,9 @@ namespace i4c
                     else
                     {
                         ulong p0 = prev[0], p1 = prev[1], p2 = prev[2], p3 = prev[3];
-                        p = p ^ ((p0 >= p1 && p0 >= p2 && p0 >= p3) ? (byte)0 :
-                            (p1 >= p2 && p1 >= p3) ? (byte)1 :
-                            (p2 >= p3) ? (byte)2 : (byte)3);
+                        p = p ^ ((p0 >= p1 && p0 >= p2 && p0 >= p3) ? (byte) 0 :
+                            (p1 >= p2 && p1 >= p3) ? (byte) 1 :
+                            (p2 >= p3) ? (byte) 2 : (byte) 3);
                     }
                     prev[pixels[i]]++;
                 }
@@ -115,20 +113,20 @@ namespace i4c
                 {
                     newPixels[i] = p;
                     int blockIndex = ((i / bw) / blocksizeY) * blocksX + x / blocksizeX;
-                    kinds[blockIndex] |= 1 << (int)(p - 1);
+                    kinds[blockIndex] |= 1 << (int) (p - 1);
                     int indexInBlock = ((i / bw) % blocksizeY) * blocksizeX + x % blocksizeX;
                     if (indexInBlock < 32)
-                        blockLow[blockIndex] |= (ulong)p << (2 * indexInBlock);
+                        blockLow[blockIndex] |= (ulong) p << (2 * indexInBlock);
                     else
-                        blockHigh[blockIndex] |= (ulong)p << (2 * (indexInBlock - 32));
+                        blockHigh[blockIndex] |= (ulong) p << (2 * (indexInBlock - 32));
                 }
             }
 
             // Start writing to the file
             long pos = 0;
 
-            output.WriteUInt32Optim((uint)bw);
-            output.WriteUInt32Optim((uint)bh);
+            output.WriteUInt32Optim((uint) bw);
+            output.WriteUInt32Optim((uint) bh);
 
             SetCounter("bytes|size", output.Position - pos);
             pos = output.Position;
@@ -168,7 +166,7 @@ namespace i4c
                     else
                         curRunLength++;
                 }
-                SetCounter("kinds-raw|"+c, ms.Position - pos2);
+                SetCounter("kinds-raw|" + c, ms.Position - pos2);
                 pos2 = ms.Position;
             }
             ms.WriteUInt32Optim(curRunLength);
@@ -192,8 +190,8 @@ namespace i4c
                 kAcw.WriteSymbol(symb);
             kAcw.Close(false);
             var kArr = kMaster.ToArray();
-            output.WriteUInt32Optim((uint)kindsArr.Length);
-            output.WriteUInt32Optim((uint)kArr.Length);
+            output.WriteUInt32Optim((uint) kindsArr.Length);
+            output.WriteUInt32Optim((uint) kArr.Length);
             output.Write(kArr, 0, kArr.Length);
             //Console.WriteLine("krl " + kArr.Length);
 
@@ -261,7 +259,7 @@ namespace i4c
 
             // Save the run lengths themselves
             MemoryStream master = new MemoryStream();
-            master.WriteUInt32Optim((uint)runLengthsArr.Length);
+            master.WriteUInt32Optim((uint) runLengthsArr.Length);
             var acw = new ArithmeticCodingWriter(master, freq);
             foreach (var symb in runLengthsArr)
                 acw.WriteSymbol(symb);
@@ -274,7 +272,7 @@ namespace i4c
             pos = output.Position;
 
             output.Close();
-        
+
         }
 
         public override IntField Decode(Stream input)
@@ -303,7 +301,7 @@ namespace i4c
         public uint hash(ulong low, ulong high)
         {
             ulong uhash = ((ulong.MaxValue % _capacity) + 1) * (high % _capacity);
-            return (uint)(((uhash % _capacity) + (low % _capacity)) % _capacity);
+            return (uint) (((uhash % _capacity) + (low % _capacity)) % _capacity);
         }
 
         public void Add(ulong low, ulong high, T value)

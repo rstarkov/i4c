@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
+using RT.KitchenSink.Collections;
 using RT.Util.Controls;
 using RT.Util.Dialogs;
-using System.Threading;
-using RT.Util.Collections;
-using RT.KitchenSink.Collections;
 
 namespace i4c
 {

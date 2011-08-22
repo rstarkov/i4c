@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using RT.Util.Collections;
 
 namespace i4c
 {
@@ -11,7 +10,7 @@ namespace i4c
         public abstract int MaxSymbol { get; }
     }
 
-    public class RunLength01Codec: SymbolCodec
+    public class RunLength01Codec : SymbolCodec
     {
         public RunLength01Codec()
         {
@@ -83,7 +82,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01MaxCodec: SymbolCodec
+    public class RunLength01MaxCodec : SymbolCodec
     {
         private int _maxrun;
 
@@ -158,7 +157,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01MaxSmartCodec: SymbolCodec
+    public class RunLength01MaxSmartCodec : SymbolCodec
     {
         private int _maxSym;
 
@@ -189,7 +188,7 @@ namespace i4c
                         result.Add(_maxSym);
                         int count = Math.Min(runCount / _maxSym - 1, _maxSym);
                         result.Add(count);
-                        runCount -= (count+1) * _maxSym;
+                        runCount -= (count + 1) * _maxSym;
                     }
                     result.Add(runCount); // even if 0
                 }
@@ -237,7 +236,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01LongShortCodec: SymbolCodec
+    public class RunLength01LongShortCodec : SymbolCodec
     {
         private int[] _syms;
         private int[] _symBase;
@@ -309,7 +308,7 @@ namespace i4c
                             result.Add(_symMuchLonger);
                             int count = Math.Min(runCount / _symMax - 1, _symMax);
                             result.Add(count);
-                            runCount -= (count+1) * _symMax;
+                            runCount -= (count + 1) * _symMax;
                         }
                         result.Add(runCount); // remainder
                     }
@@ -362,7 +361,7 @@ namespace i4c
         }
     }
 
-    public class RunLength01SplitCodec: SymbolCodec
+    public class RunLength01SplitCodec : SymbolCodec
     {
         public RunLength01SplitCodec()
         {
