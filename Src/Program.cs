@@ -167,7 +167,7 @@ namespace i4c
             }
 
             // Write stats totals to a text file
-            TextTable table = new TextTable { ColumnSpacing = 3, MaxWidth = int.MaxValue, DefaultAlignment = TextTable.Alignment.Right };
+            TextTable table = new TextTable { ColumnSpacing = 3, MaxWidth = int.MaxValue, DefaultAlignment = HorizontalTextAlignment.Right };
             table.SetCell(1, 0, "TOTAL");
             int colnum = 2;
             int rownum = 2;
@@ -180,7 +180,7 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: TextTable.Alignment.Left);
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: HorizontalTextAlignment.Left);
                 table.SetCell(1, rownum, Math.Round(totals[key], 3).ToString("#,0"));
                 colnum = 2;
                 foreach (var compr in compressors.Values.OrderBy(c => c.CanonicalFileName))
@@ -282,7 +282,7 @@ namespace i4c
 
         private static void SaveComprCounters(Compressor compr, string destDir)
         {
-            TextTable table = new TextTable { DefaultAlignment = TextTable.Alignment.Right, ColumnSpacing = 3, MaxWidth = int.MaxValue };
+            TextTable table = new TextTable { DefaultAlignment = HorizontalTextAlignment.Right, ColumnSpacing = 3, MaxWidth = int.MaxValue };
             compr.ComputeCounterTotals();
 
             int rownum = 0;
@@ -293,7 +293,7 @@ namespace i4c
                 if (indent < indent_prev)
                     rownum++;
                 indent_prev = indent;
-                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: TextTable.Alignment.Left);
+                table.SetCell(0, rownum, new string(' ', indent) + key.Split('|').Last(), alignment: HorizontalTextAlignment.Left);
                 table.SetCell(1, rownum, Math.Round(compr.Counters[key], 3).ToString("#,0"));
                 rownum++;
             }
