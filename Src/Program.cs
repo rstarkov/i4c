@@ -28,9 +28,10 @@ namespace i4c
         {
             { "alpha", typeof(I4cAlpha) },
             { "bravo", typeof(I4cBravo) },
-            { "cec", typeof(TimwiCec) },
             { "delta", typeof(I4cDelta) },
             { "echo", typeof(I4cEcho) },
+            { "timwi-xor", typeof(TimwiCecXor) },
+            { "timwi-cec", typeof(TimwiCecPredictive) },
             { "xp-rects", typeof(XperimentRects) },
             { "xp-pdiff", typeof(XperimentPdiff) },
             { "xp-split", typeof(XperimentSplit) },
@@ -237,6 +238,7 @@ namespace i4c
 
             Directory.CreateDirectory(destDir);
             FileStream output = File.Open(Path.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read);
+            compr.AddImageArgb(image, "orig");
             compr.Encode(image, output);
             output.Close();
 

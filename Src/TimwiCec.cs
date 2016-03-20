@@ -6,9 +6,63 @@ using RT.Util.Streams;
 
 namespace i4c
 {
-    public class TimwiCec : TimwiCecCompressor
+    public class TimwiCecXor : TimwiCecCompressor
     {
-        public TimwiCec()
+        public TimwiCecXor()
+        {
+            Config = new RVariant[] { 8, 8 };
+        }
+
+        public override void Configure(params RVariant[] args)
+        {
+            base.Configure(args);
+        }
+
+        public override void Encode(IntField image, Stream output)
+        {
+            image.ArgbTo4c();
+            uint[] pixels = image.Data.Select(px => (uint) px).ToArray();
+
+            var newPixels = new uint[pixels.Length];
+
+            // XOR transform
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                int x = i % image.Width;
+                uint p = pixels[i];
+
+                if (x > 0 && i >= image.Width)
+                {
+                    if (pixels[i - 1] == pixels[i - image.Width - 1])
+                        p = p ^ pixels[i - image.Width];
+                    else
+                        p = p ^ pixels[i - 1];
+                }
+                else if (x > 0)
+                    p = p ^ pixels[i - 1];
+                else if (i >= image.Width)
+                    p = p ^ pixels[i - image.Width];
+
+                newPixels[i] = p;
+            }
+
+            for (int i = 0; i < newPixels.Length; i++)
+                image.Data[i] = (int) newPixels[i];
+
+            AddImageGrayscale(image, "xformed");
+
+            base.Encode(image, output);
+        }
+
+        public override IntField Decode(Stream input)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class TimwiCecPredictive : TimwiCecCompressor
+    {
+        public TimwiCecPredictive()
         {
             Config = new RVariant[] { 8, 8 };
         }
@@ -97,6 +151,8 @@ namespace i4c
 
             for (int i = 0; i < newPixels.Length; i++)
                 image.Data[i] = (int) newPixels[i];
+
+            AddImageGrayscale(image, "xformed");
 
             base.Encode(image, output);
         }
