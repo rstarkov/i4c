@@ -133,9 +133,9 @@ namespace i4c
             {
                 ulong[] input = data.Select(val => (ulong) val).ToArray();
                 MemoryStream ms = new MemoryStream();
-                CodecUtil.SaveFreqs(ms, input, TimwiCec.runLProbsProbs, "");
+                CodecUtil.SaveFreqs(ms, input, TimwiCecCompressor.runLProbsProbs, "");
                 ms.Position = 0;
-                ulong[] freqs = CodecUtil.LoadFreqs(ms, TimwiCec.runLProbsProbs, data.Length);
+                ulong[] freqs = CodecUtil.LoadFreqs(ms, TimwiCecCompressor.runLProbsProbs, data.Length);
                 Assert.IsTrue(input.SequenceEqual(freqs));
             }
         }

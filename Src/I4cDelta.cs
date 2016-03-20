@@ -41,7 +41,7 @@ namespace i4c
 
             // Write probs
             ulong[] probs = CodecUtil.CountValues(fields, RLE.MaxSymbol);
-            CodecUtil.SaveFreqs(output, probs, TimwiCec.runLProbsProbs, "");
+            CodecUtil.SaveFreqs(output, probs, TimwiCecCompressor.runLProbsProbs, "");
             SetCounter("bytes|probs", pos.Next(output.Position));
 
             // Write fields
@@ -59,7 +59,7 @@ namespace i4c
             int w = (int) input.ReadUInt32Optim();
             int h = (int) input.ReadUInt32Optim();
             // Read probabilities
-            ulong[] probs = CodecUtil.LoadFreqs(input, TimwiCec.runLProbsProbs, RLE.MaxSymbol + 1);
+            ulong[] probs = CodecUtil.LoadFreqs(input, TimwiCecCompressor.runLProbsProbs, RLE.MaxSymbol + 1);
             // Read fields
             int len = (int) input.ReadUInt32Optim();
             ArithmeticCodingReader acr = new ArithmeticCodingReader(input, probs);

@@ -6,13 +6,8 @@ using RT.Util.Streams;
 
 namespace i4c
 {
-    public class TimwiCec : Compressor
+    public class TimwiCec : TimwiCecCompressor
     {
-        public static ulong[] kindProbsProbs = new ulong[32] { 1599, 370, 174, 137, 76, 59, 41, 36, 31, 18, 18, 21, 15, 10, 9, 5, 12, 6, 7, 8, 2, 6, 2, 4, 4, 1, 3, 7, 5, 1, 2, 128 };
-        public static ulong[] runLProbsProbs = new ulong[32] { 594, 274, 294, 231, 176, 134, 84, 67, 54, 47, 54, 31, 29, 29, 13, 18, 18, 21, 16, 11, 14, 19, 6, 8, 14, 14, 8, 9, 3, 7, 7, 512 };
-
-        int blocksizeX, blocksizeY;
-
         public TimwiCec()
         {
             Config = new RVariant[] { 8, 8 };
@@ -21,37 +16,25 @@ namespace i4c
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
-            blocksizeX = (int) Config[0];
-            blocksizeY = (int) Config[1];
         }
 
-        public override void Encode(IntField source, Stream output)
+        public override void Encode(IntField image, Stream output)
         {
-            int bw = source.Width;
-            int bh = source.Height;
-            int bwbh = bw * bh;
-            int blocksX = (bw + blocksizeX - 1) / blocksizeX;
-            int blocksY = (bh + blocksizeY - 1) / blocksizeY;
-            int blocks = blocksX * blocksY;
-
-            source.ArgbTo4c();
-            uint[] pixels = source.Data.Select(px => (uint) px).ToArray();
+            image.ArgbTo4c();
+            uint[] pixels = image.Data.Select(px => (uint) px).ToArray();
 
             var newPixels = new uint[pixels.Length];
-            int[] kinds = new int[blocks];
-            ulong[] blockHigh = new ulong[blocks];
-            ulong[] blockLow = new ulong[blocks];
             var predictor = new Efficient128bitHashTable<ulong[]>();
             ulong context1 = 0, context2 = 0;
 
             // Predictive transform
-            for (int i = 0; i < bwbh; i++)
+            for (int i = 0; i < pixels.Length; i++)
             {
-                int x = i % bw;
+                int x = i % image.Width;
                 uint p = pixels[i];
                 bool fallback = false;
 
-                if (i < 7 * bw || x < 3)
+                if (i < 7 * image.Width || x < 3)
                     fallback = true;
                 else
                 {
@@ -59,7 +42,7 @@ namespace i4c
                     {
                         context1 = 0;
                         context2 = 0;
-                        for (int yy = -7 * bw; yy <= 0; yy += bw)
+                        for (int yy = -7 * image.Width; yy <= 0; yy += image.Width)
                             for (int xx = -3; (xx <= 4) && (xx + yy < 0); xx++)
                             {
                                 context1 = (context1 << 2) | ((context2 & 0xC000000000000000) >> 62);
@@ -70,10 +53,10 @@ namespace i4c
                     {
                         context1 = ((context1 << 2) & 0x3FFF3FFF3FFF3C) | ((context2 & 0xC000000000000000) >> 62);
                         context2 = ((context2 << 2) & 0xFF3FFF3FFF3FFF3C) | (ulong) pixels[i - 1];
-                        if (x + 4 < bw)
+                        if (x + 4 < image.Width)
                         {
-                            context1 |= ((ulong) pixels[i - 7 * bw + 4] << 38) | ((ulong) pixels[i - 6 * bw + 4] << 22) | ((ulong) pixels[i - 5 * bw + 4] << 6);
-                            context2 |= ((ulong) pixels[i - 4 * bw + 4] << 54) | ((ulong) pixels[i - 3 * bw + 4] << 38) | ((ulong) pixels[i - 2 * bw + 4] << 22) | ((ulong) pixels[i - 1 * bw + 4] << 6);
+                            context1 |= ((ulong) pixels[i - 7 * image.Width + 4] << 38) | ((ulong) pixels[i - 6 * image.Width + 4] << 22) | ((ulong) pixels[i - 5 * image.Width + 4] << 6);
+                            context2 |= ((ulong) pixels[i - 4 * image.Width + 4] << 54) | ((ulong) pixels[i - 3 * image.Width + 4] << 38) | ((ulong) pixels[i - 2 * image.Width + 4] << 22) | ((ulong) pixels[i - 1 * image.Width + 4] << 6);
                         }
                     }
                     ulong[] prev = predictor.Get(context1, context2);
@@ -96,25 +79,68 @@ namespace i4c
                 if (fallback)
                 {
                     // Fall back to old XOR transform
-                    if (x > 0 && i >= bw)
+                    if (x > 0 && i >= image.Width)
                     {
-                        if (pixels[i - 1] == pixels[i - bw - 1])
-                            p = p ^ pixels[i - bw];
+                        if (pixels[i - 1] == pixels[i - image.Width - 1])
+                            p = p ^ pixels[i - image.Width];
                         else
                             p = p ^ pixels[i - 1];
                     }
                     else if (x > 0)
                         p = p ^ pixels[i - 1];
-                    else if (i >= bw)
-                        p = p ^ pixels[i - bw];
+                    else if (i >= image.Width)
+                        p = p ^ pixels[i - image.Width];
                 }
+
+                newPixels[i] = p;
+            }
+
+            for (int i = 0; i < newPixels.Length; i++)
+                image.Data[i] = (int) newPixels[i];
+
+            base.Encode(image, output);
+        }
+
+        public override IntField Decode(Stream input)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class TimwiCecCompressor : Compressor
+    {
+        public static ulong[] kindProbsProbs = new ulong[32] { 1599, 370, 174, 137, 76, 59, 41, 36, 31, 18, 18, 21, 15, 10, 9, 5, 12, 6, 7, 8, 2, 6, 2, 4, 4, 1, 3, 7, 5, 1, 2, 128 };
+        public static ulong[] runLProbsProbs = new ulong[32] { 594, 274, 294, 231, 176, 134, 84, 67, 54, 47, 54, 31, 29, 29, 13, 18, 18, 21, 16, 11, 14, 19, 6, 8, 14, 14, 8, 9, 3, 7, 7, 512 };
+
+        int _blocksizeX, _blocksizeY;
+
+        public override void Configure(params RVariant[] args)
+        {
+            base.Configure(args);
+            _blocksizeX = Config[0];
+            _blocksizeY = Config[1];
+        }
+
+        public override void Encode(IntField image, Stream output)
+        {
+            int blocksX = (image.Width + _blocksizeX - 1) / _blocksizeX;
+            int blocksY = (image.Height + _blocksizeY - 1) / _blocksizeY;
+            int blocks = blocksX * blocksY;
+            int[] kinds = new int[blocks];
+            ulong[] blockHigh = new ulong[blocks];
+            ulong[] blockLow = new ulong[blocks];
+            var pixels = image.Data.Select(p => (uint) p).ToArray();
+
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                int x = i % image.Width;
+                uint p = pixels[i];
 
                 if (p != 0)
                 {
-                    newPixels[i] = p;
-                    int blockIndex = ((i / bw) / blocksizeY) * blocksX + x / blocksizeX;
+                    int blockIndex = ((i / image.Width) / _blocksizeY) * blocksX + x / _blocksizeX;
                     kinds[blockIndex] |= 1 << (int) (p - 1);
-                    int indexInBlock = ((i / bw) % blocksizeY) * blocksizeX + x % blocksizeX;
+                    int indexInBlock = ((i / image.Width) % _blocksizeY) * _blocksizeX + x % _blocksizeX;
                     if (indexInBlock < 32)
                         blockLow[blockIndex] |= (ulong) p << (2 * indexInBlock);
                     else
@@ -125,8 +151,8 @@ namespace i4c
             // Start writing to the file
             long pos = 0;
 
-            output.WriteUInt32Optim((uint) bw);
-            output.WriteUInt32Optim((uint) bh);
+            output.WriteUInt32Optim((uint) image.Width);
+            output.WriteUInt32Optim((uint) image.Height);
 
             SetCounter("bytes|size", output.Position - pos);
             pos = output.Position;
@@ -213,33 +239,33 @@ namespace i4c
             int j = 0;
             ulong curLength = 0;
             var kind = kinds[0];
-            while (j < 3 * bwbh)
+            while (j < 3 * pixels.Length)
             {
-                var c = j / bwbh;
-                var i = j % bwbh;
-                var x = i % bw;
-                if (x % blocksizeX == 0)
-                    kind = kinds[((i / bw) / blocksizeY) * blocksX + x / blocksizeX];
+                var c = j / pixels.Length;
+                var i = j % pixels.Length;
+                var x = i % image.Width;
+                if (x % _blocksizeX == 0)
+                    kind = kinds[((i / image.Width) / _blocksizeY) * blocksX + x / _blocksizeX];
                 j++;
                 if (kind == 3)
                 {
-                    if (((i / bw) % blocksizeY) * blocksizeX + x % blocksizeX < 32) continue;
+                    if (((i / image.Width) % _blocksizeY) * _blocksizeX + x % _blocksizeX < 32) continue;
                     kind = 7;
                 }
                 else if (kind == 6)
                 {
-                    if (((i / bw) % blocksizeY) * blocksizeX + x % blocksizeX > 31) continue;
+                    if (((i / image.Width) % _blocksizeY) * _blocksizeX + x % _blocksizeX > 31) continue;
                     kind = 7;
                 }
                 else if (((kind % 8) & (1 << c)) == 0)
                     continue;
 
-                if (newPixels[i] == c + 1)
+                if (pixels[i] == c + 1)
                 {
                     ms.WriteUInt64Optim(curLength);
                     curLength = 0;
                 }
-                else if (newPixels[i] == 0 || newPixels[i] > c + 1)
+                else if (pixels[i] == 0 || pixels[i] > c + 1)
                     curLength++;
             }
             if (curLength > 0)
@@ -272,7 +298,6 @@ namespace i4c
             pos = output.Position;
 
             output.Close();
-
         }
 
         public override IntField Decode(Stream input)
