@@ -61,6 +61,9 @@
     <Compile Include="CodecUtil.cs" />
     <Compile Include="Compressor.cs" />
     <Compile Include="Foreseer.cs" />
+    <Compile Include="I4cAlpha.cs" />
+    <Compile Include="I4cBravo.cs" />
+    <Compile Include="I4cDelta.cs" />
     <Compile Include="I4cEcho.cs" />
     <Compile Include="IntField.cs" />
     <Compile Include="LzwCodec.cs" />
@@ -72,6 +75,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XperimentBackLzw.cs" />
+    <Compile Include="XperimentPdiff.cs" />
+    <Compile Include="XperimentRects.cs" />
+    <Compile Include="XperimentResolution.cs" />
+    <Compile Include="XperimentSplit.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
       <SubType>Designer</SubType>
