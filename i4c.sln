@@ -1,11 +1,8 @@
-
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "i4c", "Src\i4c.csproj", "{EBFA4644-13E6-4082-B446-5C0DDF6101DD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "..\RT.Util\Src\RT.Util.csproj", "{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSink", "..\RT.Util\Src\RT.KitchenSink.csproj", "{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,14 +14,6 @@ Global
 		{EBFA4644-13E6-4082-B446-5C0DDF6101DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBFA4644-13E6-4082-B446-5C0DDF6101DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBFA4644-13E6-4082-B446-5C0DDF6101DD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
