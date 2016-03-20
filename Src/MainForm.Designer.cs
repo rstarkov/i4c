@@ -133,7 +133,6 @@
             this.MainMenuStrip = this.MainMenu;
             this.Name = "MainForm";
             this.Text = "i4c";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.MainMenu.ResumeLayout(false);
             this.MainMenu.PerformLayout();
             this.tabsMain.ResumeLayout(false);

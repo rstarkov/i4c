@@ -7,20 +7,18 @@ using System.Windows.Forms;
 using RT.KitchenSink.Collections;
 using RT.Util.Controls;
 using RT.Util.Dialogs;
+using RT.Util.Forms;
+using RT.Util.ExtensionMethods;
 
 namespace i4c
 {
-    public partial class MainForm : Form
+    public partial class MainForm : ManagedForm
     {
         public static MainForm TheInstance;
         public static Queue<Tuple<string, IntField>> Images = new Queue<Tuple<string, IntField>>();
 
-        public class Settings
-        {
-            public Dictionary<string, string> LastArgs = new Dictionary<string, string>();
-        }
-
         public MainForm()
+            : base(Program.Settings.MainFormSettings)
         {
             TheInstance = this;
             InitializeComponent();
@@ -33,10 +31,13 @@ namespace i4c
         private void Compressor_Click(object sender, EventArgs e)
         {
             ToolStripMenuItem mi = (ToolStripMenuItem) sender;
-            Compressor compr = Program.GetCompressor(mi.Text.Replace("&", ""));
-            var input = InputBox.GetLine("Please enter the arguments for this compressor:", "");
+            var compressorName = mi.Text.Replace("&", "");
+            Compressor compr = Program.GetCompressor(compressorName);
+            var input = InputBox.GetLine("Please enter the arguments for this compressor:", Program.Settings.LastArgs.Get(compressorName, ""));
             if (input == null)
                 return;
+            Program.Settings.LastArgs[compressorName] = input;
+            Program.Settings.Save();
             var args = input.Split(' ');
             compr.Configure(args.Skip(1).Select(val => (RVariant) val).ToArray());
             ThreadPool.QueueUserWorkItem(dummy => Program.CompressDecompressSingle(compr, args[0]));

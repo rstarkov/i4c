@@ -18,6 +18,8 @@ namespace i4c
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     static class Program
     {
+        public static Settings Settings;
+
         /// <summary>
         /// Define any new compressors in here and they will be accessible by the name
         /// via the GUI menu or the command line.
@@ -55,8 +57,10 @@ namespace i4c
 
             if (args.Length == 0)
             {
+                SettingsUtil.LoadSettings(out Settings);
                 MainForm form = new MainForm();
                 Application.Run(form);
+                Settings.Save();
             }
             else if (args[0] == "?")
             {
