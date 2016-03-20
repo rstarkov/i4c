@@ -30,6 +30,7 @@ namespace i4c
             { "bravo", typeof(I4cBravo) },
             { "delta", typeof(I4cDelta) },
             { "echo", typeof(I4cEcho) },
+            { "foxtrot", typeof(I4cFoxtrot) },
             { "timwi-xor", typeof(TimwiCecXor) },
             { "timwi-cec", typeof(TimwiCecPredictive) },
             { "xp-rects", typeof(XperimentRects) },

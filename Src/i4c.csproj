@@ -65,6 +65,7 @@
     <Compile Include="I4cBravo.cs" />
     <Compile Include="I4cDelta.cs" />
     <Compile Include="I4cEcho.cs" />
+    <Compile Include="I4cFoxtrot.cs" />
     <Compile Include="IntField.cs" />
     <Compile Include="LzwCodec.cs" />
     <Compile Include="MainForm.cs">

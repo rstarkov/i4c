@@ -412,6 +412,16 @@ namespace i4c
             return p1;
         }
 
+        public void Transpose()
+        {
+            var result = new IntField(Height, Width);
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++)
+                    result[y, x] = this[x, y];
+            Width = result.Width;
+            Height = result.Height;
+            Data = result.Data;
+        }
     }
 
 }

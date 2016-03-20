@@ -281,14 +281,14 @@ namespace i4c
     }
 
     class ColorFrequencies
-        {
+    {
         private int Freq0 = 0;
         private int Freq1 = 0;
         private int Freq2 = 0;
         private int Freq3 = 0;
 
-            public int Predicted()
-            {
+        public int Predicted()
+        {
             if (Freq0 >= Freq1 && Freq0 >= Freq2 && Freq0 >= Freq3)
                 return 0;
             if (Freq1 >= Freq2 && Freq1 >= Freq3)
@@ -296,10 +296,10 @@ namespace i4c
             if (Freq2 >= Freq3)
                 return 2;
             return 3;
-            }
+        }
 
-            public void Learn(int actual)
-            {
+        public void Learn(int actual)
+        {
             switch (actual)
             {
                 case 0: Freq0++; return;
@@ -308,8 +308,8 @@ namespace i4c
                 case 3: Freq3++; return;
                 default: throw new Exception();
             }
-            }
         }
+    }
 
     public class FixedSizeForeseer : Foreseer
     {
@@ -381,4 +381,80 @@ namespace i4c
         }
     }
 
+    public class VariableSizeForeseer : Foreseer
+    {
+        private int _width;
+        private int _height;
+        private int _xpos;
+        private Foreseer _fallback;
+
+        private Dictionary<string, ColorFrequencies> _history = new Dictionary<string, ColorFrequencies>();
+
+        public VariableSizeForeseer(int width, int height, int xpos, Foreseer fallback)
+        {
+            _width = width;
+            _height = height;
+            _xpos = xpos;
+            _fallback = fallback;
+        }
+
+        private List<string> _curAreas = new List<string>();
+
+        public override void Initialize(IntField image)
+        {
+            _history.Clear();
+            _fallback.Initialize(image);
+        }
+
+        public override int Foresee(IntField image, int x, int y, int p)
+        {
+            _curAreas.Clear();
+            for (int h = _height; h >= 1; h--)
+            {
+                var area = ExtractArea(image, x, y, h);
+                if (area != null)
+                    _curAreas.Add(area);
+            }
+
+            foreach (var area in _curAreas)
+            {
+                ColorFrequencies cf;
+                if (_history.TryGetValue(area, out cf))
+                    return cf.Predicted();
+            }
+
+            return _fallback.Foresee(image, x, y, p);
+        }
+
+        public override void Learn(IntField image, int x, int y, int p, int actual)
+        {
+            _fallback.Learn(image, x, y, p, actual);
+
+            foreach (var area in _curAreas)
+            {
+                ColorFrequencies cf;
+                if (!_history.TryGetValue(area, out cf))
+                    _history.Add(area, cf = new ColorFrequencies());
+
+                cf.Learn(actual);
+            }
+        }
+
+        public string ExtractArea(IntField image, int x, int y, int height)
+        {
+            if (x < _xpos || x > image.Width - _width + _xpos || y < height - 1)
+                return null;
+
+            var sb = new StringBuilder(_width * height);
+            for (int cx = x - _xpos; cx < x; cx++)
+                sb.Append((char) ('0' + image[cx, y]));
+            for (int cy = y - 1; cy > y - height; cy--)
+            {
+                sb.Append('|');
+                for (int cx = x - _xpos; cx < x - _xpos + _width; cx++)
+                    sb.Append((char) ('0' + image[cx, cy]));
+            }
+            return sb.ToString();
+        }
+    }
 }
