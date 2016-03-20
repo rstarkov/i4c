@@ -280,6 +280,37 @@ namespace i4c
         }
     }
 
+    class ColorFrequencies
+        {
+        private int Freq0 = 0;
+        private int Freq1 = 0;
+        private int Freq2 = 0;
+        private int Freq3 = 0;
+
+            public int Predicted()
+            {
+            if (Freq0 >= Freq1 && Freq0 >= Freq2 && Freq0 >= Freq3)
+                return 0;
+            if (Freq1 >= Freq2 && Freq1 >= Freq3)
+                return 1;
+            if (Freq2 >= Freq3)
+                return 2;
+            return 3;
+            }
+
+            public void Learn(int actual)
+            {
+            switch (actual)
+            {
+                case 0: Freq0++; return;
+                case 1: Freq1++; return;
+                case 2: Freq2++; return;
+                case 3: Freq3++; return;
+                default: throw new Exception();
+            }
+            }
+        }
+
     public class FixedSizeForeseer : Foreseer
     {
         private int _width;
@@ -287,26 +318,7 @@ namespace i4c
         private int _xpos;
         private Foreseer _fallback;
 
-        private class outcomes
-        {
-            private Dictionary<int, int> _counts = new Dictionary<int, int>();
-
-            public int Predicted()
-            {
-                int maxFrequency = _counts.Values.Max();
-                return _counts.Where(kvp => kvp.Value == maxFrequency).Select(kvp => kvp.Key).Order().First();
-            }
-
-            public void Learn(int actual)
-            {
-                if (_counts.ContainsKey(actual))
-                    _counts[actual]++;
-                else
-                    _counts.Add(actual, 1);
-            }
-        }
-
-        private Dictionary<string, outcomes> _history = new Dictionary<string, outcomes>();
+        private Dictionary<string, ColorFrequencies> _history = new Dictionary<string, ColorFrequencies>();
 
         public FixedSizeForeseer(int width, int height, int xpos, Foreseer fallback)
         {
@@ -346,7 +358,7 @@ namespace i4c
             }
 
             if (!_history.ContainsKey(_curArea))
-                _history.Add(_curArea, new outcomes());
+                _history.Add(_curArea, new ColorFrequencies());
 
             _history[_curArea].Learn(actual);
         }
@@ -356,15 +368,16 @@ namespace i4c
             if (x < _width - 1 - _xpos || x >= image.Width - _xpos || y < _height - 1)
                 return null;
 
-            IntField area = image.Extract(x - _width + 1 + _xpos, y - _height + 1, _width, _height);
-            int[] data = new int[area.Data.Length - 1 - _xpos];
-            Array.Copy(area.Data, data, data.Length);
-
-            // Convert to string
-            StringBuilder SB = new StringBuilder(data.Length);
-            foreach (var sym in data)
-                SB.Append(sym.ToString());
-            return SB.ToString();
+            var sb = new StringBuilder(_width * _height);
+            for (int cx = x - _xpos; cx < x; cx++)
+                sb.Append((char) ('0' + image[cx, y]));
+            for (int cy = y - 1; cy > y - _height; cy--)
+            {
+                sb.Append('|');
+                for (int cx = x - _xpos; cx < x - _xpos + _width; cx++)
+                    sb.Append((char) ('0' + image[cx, cy]));
+            }
+            return sb.ToString();
         }
     }
 
