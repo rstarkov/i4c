@@ -61,6 +61,7 @@
     <Compile Include="CodecUtil.cs" />
     <Compile Include="Compressor.cs" />
     <Compile Include="Foreseer.cs" />
+    <Compile Include="HashForeseer.cs" />
     <Compile Include="I4cAlpha.cs" />
     <Compile Include="I4cBravo.cs" />
     <Compile Include="I4cDelta.cs" />

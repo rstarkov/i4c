@@ -47,6 +47,7 @@ namespace i4c
         static void Main(string[] args)
         {
             //CodecTests.TestRandom();
+            PatternHashTable.SelfTest();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -238,10 +239,9 @@ namespace i4c
             image.ArgbLoadFromFile(sourcePath);
 
             Directory.CreateDirectory(destDir);
-            FileStream output = File.Open(Path.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read);
             compr.AddImageArgb(image, "orig");
+            using (var output = File.Open(Path.Combine(destDir, destFile), FileMode.Create, FileAccess.Write, FileShare.Read))
             compr.Encode(image, output);
-            output.Close();
 
             SaveComprImages(compr, destDir);
             SaveComprDumps(compr, destDir);

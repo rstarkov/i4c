@@ -81,7 +81,8 @@ namespace i4c
 
         public IntField Clone()
         {
-            IntField result = new IntField(Width, Height);
+            IntField result = (IntField) MemberwiseClone();
+            result.Data = new int[result.Data.Length];
             Array.Copy(Data, result.Data, Data.Length);
             return result;
         }

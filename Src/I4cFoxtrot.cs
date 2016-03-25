@@ -11,20 +11,22 @@ namespace i4c
 
         public I4cFoxtrot()
         {
-            Config = new RVariant[] { 8, 8, 0, 7, 7, 3, 7, 7, 3 };
+            Config = new RVariant[] { 8, 8, 0, 13, 13 };
         }
 
         public override void Configure(params RVariant[] args)
         {
             base.Configure(args);
             _mode = Config[2];
-            SeerH = new VariableSizeForeseer(Config[3], Config[4], Config[5], new HorzVertForeseer());
-            SeerV = new VariableSizeForeseer(Config[6], Config[7], Config[8], new HorzVertForeseer());
+            SeerH = new HashForeseer(Config[3], Config[4], new HorzVertForeseer());
+            SeerV = new HashForeseer(Config[3], Config[4], new HorzVertForeseer());
         }
 
         public override void Encode(IntField image, Stream output)
         {
             image.ArgbTo4c();
+            image.OutOfBoundsMode = OutOfBoundsMode.SubstColor;
+            image.OutOfBoundsColor = 0;
             switch (_mode)
             {
                 case 0:
