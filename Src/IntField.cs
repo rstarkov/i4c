@@ -261,18 +261,23 @@ namespace i4c
                 }
         }
 
-        public void PredictionEnTransformXor(Foreseer foreseer)
+        public int PredictionEnTransformXor(Foreseer foreseer)
         {
             IntField orig = this.Clone();
             foreseer.Initialize(orig);
+            int wrongPredictions = 0;
 
             int p = 0;
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
                     Data[p] = orig.Data[p] ^ foreseer.Foresee(orig, x, y, p);
+                    if (Data[p] != 0)
+                        wrongPredictions++;
                     foreseer.Learn(orig, x, y, p, orig.Data[p]);
                 }
+
+            return wrongPredictions;
         }
 
         public void PredictionDeTransformXor(Foreseer foreseer)

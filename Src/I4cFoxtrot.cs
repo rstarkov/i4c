@@ -2,6 +2,10 @@
 using System.IO;
 using RT.KitchenSink.Collections;
 
+// TODO:
+// second pass should predict 0 when confidence is low, to avoid making things worse
+// investigate background/foreground/color splitting again
+
 namespace i4c
 {
     public class I4cFoxtrot : TimwiCecCompressor
@@ -30,29 +34,29 @@ namespace i4c
             switch (_mode)
             {
                 case 0:
-                    image.PredictionEnTransformXor(SeerH);
+                    SetCounter("mispredicts-h", image.PredictionEnTransformXor(SeerH));
                     AddImageGrayscale(image, "xformed-h");
                     break;
                 case 1:
                     image.Transpose();
-                    image.PredictionEnTransformXor(SeerV);
+                    SetCounter("mispredicts-v", image.PredictionEnTransformXor(SeerV));
                     image.Transpose();
                     AddImageGrayscale(image, "xformed-v");
                     break;
                 case 2:
-                    image.PredictionEnTransformXor(SeerH);
+                    SetCounter("mispredicts-h", image.PredictionEnTransformXor(SeerH));
                     AddImageGrayscale(image, "xformed-h");
                     image.Transpose();
-                    image.PredictionEnTransformXor(SeerV);
+                    SetCounter("mispredicts-v", image.PredictionEnTransformXor(SeerV));
                     image.Transpose();
                     AddImageGrayscale(image, "xformed-v");
                     break;
                 case 3:
                     image.Transpose();
-                    image.PredictionEnTransformXor(SeerV);
+                    SetCounter("mispredicts-v", image.PredictionEnTransformXor(SeerV));
                     image.Transpose();
                     AddImageGrayscale(image, "xformed-v");
-                    image.PredictionEnTransformXor(SeerH);
+                    SetCounter("mispredicts-h", image.PredictionEnTransformXor(SeerH));
                     AddImageGrayscale(image, "xformed-h");
                     break;
                 default:

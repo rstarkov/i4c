@@ -26,24 +26,33 @@ namespace i4c
 
         public override int Foresee(IntField image, int x, int y, int p)
         {
+            double conf0 = 0, conf1 = 0, conf2 = 0, conf3 = 0;
             foreach (var size in _sizes)
             {
                 ulong hash = HashImageRegion(image, x, y, size.Width, size.Height);
                 uint c0, c1, c2, c3;
                 _hashtable.GetCounts(hash, out c0, out c1, out c2, out c3);
-                if (c0 + c1 + c2 + c3 == 0)
+                double total = c0 + c1 + c2 + c3;
+                if (total == 0)
                     continue;
-                if (c0 >= c1 && c0 >= c2 && c0 >= c3)
+                double wt = Math.Sqrt(size.Width * size.Height);
+                conf0 += c0 / total * wt;
+                conf1 += c1 / total * wt;
+                conf2 += c2 / total * wt;
+                conf3 += c3 / total * wt;
+            }
+
+            if (conf0 == 0 && conf1 == 0 && conf2 == 0 && conf3 == 0)
+                return _fallback.Foresee(image, x, y, p);
+            else if (conf0 >= conf1 && conf0 >= conf2 && conf0 >= conf3)
                     return 0;
-                else if (c1 >= c2 && c1 >= c3)
+            else if (conf1 >= conf2 && conf1 >= conf3)
                     return 1;
-                else if (c2 >= c3)
+            else if (conf2 >= conf3)
                     return 2;
                 else
                     return 3;
             }
-            return _fallback.Foresee(image, x, y, p);
-        }
 
         public override void Learn(IntField image, int x, int y, int p, int actual)
         {
