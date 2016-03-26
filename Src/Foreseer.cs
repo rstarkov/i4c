@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RT.Util.ExtensionMethods;
 
 namespace i4c
 {
@@ -12,16 +11,16 @@ namespace i4c
         {
         }
 
-        public abstract int Foresee(IntField image, int x, int y, int p);
+        public abstract int Foresee(IntField image, int x, int y);
 
-        public virtual void Learn(IntField image, int x, int y, int p, int actual)
+        public virtual void Learn(IntField image, int x, int y, int actual, int predicted)
         {
         }
     }
 
     public class NullForeseer : Foreseer
     {
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             return 0;
         }
@@ -55,7 +54,7 @@ namespace i4c
             return counts.Where(kvp => kvp.Value == maxcount).First().Key;
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             return MostFrequent(image, x, y, _size, _size);
         }
@@ -116,7 +115,7 @@ namespace i4c
             else return pattern.CleanHorz;
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             pattern horzProbe = findPattern(image, x - _horzLookback, y - _horzThickness + 1, _horzLookback, _horzThickness);
             pattern vertProbe = findPattern(image, x - _vertThickness + 1, y - _vertLookback, _vertThickness, _vertLookback);
@@ -142,11 +141,11 @@ namespace i4c
 
     public class HorzVertForeseer : Foreseer
     {
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
-            int l = x == 0 ? 0 : image.Data[p - 1];
-            int t = y == 0 ? 0 : image.Data[p - image.Width];
-            int tl = (x == 0 || y == 0) ? 0 : image.Data[p - image.Width - 1];
+            int l = x == 0 ? 0 : image[x - 1, y];
+            int t = y == 0 ? 0 : image[x, y - 1];
+            int tl = (x == 0 || y == 0) ? 0 : image[x - 1, y - 1];
 
             if (l == tl && t == tl)
                 return tl; // solid fill
@@ -163,11 +162,11 @@ namespace i4c
 
     public class VertForeseer : Foreseer
     {
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
-            int l = x == 0 ? 0 : image.Data[p - 1];
-            int t = y == 0 ? 0 : image.Data[p - image.Width];
-            int tl = (x == 0 || y == 0) ? 0 : image.Data[p - image.Width - 1];
+            int l = x == 0 ? 0 : image[x - 1, y];
+            int t = y == 0 ? 0 : image[x, y - 1];
+            int tl = (x == 0 || y == 0) ? 0 : image[x - 1, y - 1];
 
             if (l == tl && t == tl)
                 return tl; // solid fill
@@ -211,24 +210,24 @@ namespace i4c
             _fallback.Initialize(image);
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             _curArea = ExtractArea(image, x, y, out _curMostFreqSymbol, out _curSecondFreqSymbol);
 
             if (_curArea == null)
-                return _fallback.Foresee(image, x, y, p);
+                return _fallback.Foresee(image, x, y);
 
             if (_history.ContainsKey(_curArea))
                 return _history[_curArea].MostFrequent > _history[_curArea].Other ? _curMostFreqSymbol : _curSecondFreqSymbol;
             else
-                return _fallback.Foresee(image, x, y, p);
+                return _fallback.Foresee(image, x, y);
         }
 
-        public override void Learn(IntField image, int x, int y, int p, int actual)
+        public override void Learn(IntField image, int x, int y, int actual, int predicted)
         {
             if (_curArea == null)
             {
-                _fallback.Learn(image, x, y, p, actual);
+                _fallback.Learn(image, x, y, actual, predicted);
                 return;
             }
 
@@ -336,24 +335,24 @@ namespace i4c
             _fallback.Initialize(image);
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             _curArea = ExtractArea(image, x, y);
 
             if (_curArea == null)
-                return _fallback.Foresee(image, x, y, p);
+                return _fallback.Foresee(image, x, y);
 
             if (_history.ContainsKey(_curArea))
                 return _history[_curArea].Predicted();
             else
-                return _fallback.Foresee(image, x, y, p);
+                return _fallback.Foresee(image, x, y);
         }
 
-        public override void Learn(IntField image, int x, int y, int p, int actual)
+        public override void Learn(IntField image, int x, int y, int actual, int predicted)
         {
             if (_curArea == null)
             {
-                _fallback.Learn(image, x, y, p, actual);
+                _fallback.Learn(image, x, y, actual, predicted);
                 return;
             }
 
@@ -406,7 +405,7 @@ namespace i4c
             _fallback.Initialize(image);
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             _curAreas.Clear();
             for (int h = _height; h >= 1; h--)
@@ -423,12 +422,12 @@ namespace i4c
                     return cf.Predicted();
             }
 
-            return _fallback.Foresee(image, x, y, p);
+            return _fallback.Foresee(image, x, y);
         }
 
-        public override void Learn(IntField image, int x, int y, int p, int actual)
+        public override void Learn(IntField image, int x, int y, int actual, int predicted)
         {
-            _fallback.Learn(image, x, y, p, actual);
+            _fallback.Learn(image, x, y, actual, predicted);
 
             foreach (var area in _curAreas)
             {

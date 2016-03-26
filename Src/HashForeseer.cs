@@ -12,6 +12,12 @@ namespace i4c
         private PatternHashTable _hashtable = new PatternHashTable();
         private Foreseer _fallback;
 
+        public override void Initialize(IntField image)
+        {
+            image.OutOfBoundsMode = OutOfBoundsMode.SubstColor;
+            image.OutOfBoundsColor = 0;
+        }
+
         public HashForeseer(int maxW, int maxH, Foreseer fallback)
         {
             _fallback = fallback;
@@ -24,7 +30,7 @@ namespace i4c
             _sizes = sizes.OrderByDescending(sz => sz.Width * sz.Height).ToArray();
         }
 
-        public override int Foresee(IntField image, int x, int y, int p)
+        public override int Foresee(IntField image, int x, int y)
         {
             double conf0 = 0, conf1 = 0, conf2 = 0, conf3 = 0;
             foreach (var size in _sizes)
@@ -43,7 +49,7 @@ namespace i4c
             }
 
             if (conf0 == 0 && conf1 == 0 && conf2 == 0 && conf3 == 0)
-                return _fallback.Foresee(image, x, y, p);
+                return _fallback.Foresee(image, x, y);
             else if (conf0 >= conf1 && conf0 >= conf2 && conf0 >= conf3)
                     return 0;
             else if (conf1 >= conf2 && conf1 >= conf3)
@@ -54,7 +60,7 @@ namespace i4c
                     return 3;
             }
 
-        public override void Learn(IntField image, int x, int y, int p, int actual)
+        public override void Learn(IntField image, int x, int y, int actual, int predicted)
         {
             foreach (var size in _sizes)
             {

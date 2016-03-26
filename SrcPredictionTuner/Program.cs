@@ -28,8 +28,6 @@ namespace PredictionTuner
                     example.Statistics = new List<Statistic>();
                     while (cur < line.Length - 1)
                     {
-                        //if (line[cur][0] == 'E')
-                        //    break;
                         var stat = new Statistic();
                         stat.Area = ParseExpected('R', line[cur++]);
                         while (true)

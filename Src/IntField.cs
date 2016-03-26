@@ -226,8 +226,9 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = foreseer.Foresee(orig, x, y, p);
-                    foreseer.Learn(orig, x, y, p, orig.Data[p]);
+                    int predicted = foreseer.Foresee(orig, x, y);
+                    Data[p] = predicted;
+                    foreseer.Learn(orig, x, y, orig.Data[p], predicted);
                 }
         }
 
@@ -240,10 +241,11 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = orig.Data[p] - foreseer.Foresee(orig, x, y, p);
+                    int predicted = foreseer.Foresee(orig, x, y);
+                    Data[p] = orig.Data[p] - predicted;
                     if (Data[p] < 0)
                         Data[p] += modulus;
-                    foreseer.Learn(orig, x, y, p, orig.Data[p]);
+                    foreseer.Learn(orig, x, y, orig.Data[p], predicted);
                 }
         }
 
@@ -256,8 +258,9 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = (diff.Data[p] + foreseer.Foresee(this, x, y, p)) % modulus;
-                    foreseer.Learn(this, x, y, p, this.Data[p]);
+                    int predicted = foreseer.Foresee(this, x, y);
+                    Data[p] = (diff.Data[p] + predicted) % modulus;
+                    foreseer.Learn(this, x, y, this.Data[p], predicted);
                 }
         }
 
@@ -271,10 +274,11 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = orig.Data[p] ^ foreseer.Foresee(orig, x, y, p);
+                    int predicted = foreseer.Foresee(orig, x, y);
+                    Data[p] = orig.Data[p] ^ predicted;
                     if (Data[p] != 0)
                         wrongPredictions++;
-                    foreseer.Learn(orig, x, y, p, orig.Data[p]);
+                    foreseer.Learn(orig, x, y, orig.Data[p], predicted);
                 }
 
             return wrongPredictions;
@@ -289,8 +293,9 @@ namespace i4c
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++, p++)
                 {
-                    Data[p] = diff.Data[p] ^ foreseer.Foresee(this, x, y, p);
-                    foreseer.Learn(this, x, y, p, this.Data[p]);
+                    int predicted = foreseer.Foresee(this, x, y);
+                    Data[p] = diff.Data[p] ^ predicted;
+                    foreseer.Learn(this, x, y, this.Data[p], predicted);
                 }
         }
 

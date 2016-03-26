@@ -29,8 +29,6 @@ namespace i4c
         public override void Encode(IntField image, Stream output)
         {
             image.ArgbTo4c();
-            image.OutOfBoundsMode = OutOfBoundsMode.SubstColor;
-            image.OutOfBoundsColor = 0;
             switch (_mode)
             {
                 case 0:
